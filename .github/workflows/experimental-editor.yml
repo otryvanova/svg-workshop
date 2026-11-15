@@ -1,4 +1,4 @@
-name: Experimental SVG editor checks
+name: Experimental SVG editor checks and lesson deployment
 on:
   push:
     branches: [experiment/vite-codemirror-editor]
@@ -7,12 +7,12 @@ on:
       - ".github/workflows/experimental-editor.yml"
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: experimental-editor-checks
   cancel-in-progress: true
 jobs:
-  build-and-test:
+  build-test-and-publish:
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -23,12 +23,39 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: experimental-editor/package.json
-      - run: npm install
-      - run: npm run build
-      - run: npx playwright install --with-deps chromium
-      - run: npm test
+          cache-dependency-path: experimental-editor/package-lock.json
+      - run: npm ci
+      - name: Build for tests
+        run: npm run build
+      - name: Install Chromium for browser tests
+        run: npx playwright install --with-deps chromium
+      - name: Run unit and browser tests
+        run: npm test
+      - name: Build for GitHub Pages
+        run: SVG_WORKSHOP_PAGES=1 npm run build
       - uses: actions/upload-artifact@v4
         with:
           name: experimental-svg-editor-build
           path: experimental-editor/dist
+      - name: Check out the existing GitHub Pages source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: published-site
+          persist-credentials: true
+      - name: Publish the lesson under a separate URL
+        working-directory: .
+        run: |
+          rm -rf published-site/lesson-01
+          mkdir -p published-site/lesson-01
+          cp -R experimental-editor/dist/. published-site/lesson-01/
+          cd published-site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lesson-01
+          if git diff --cached --quiet; then
+            echo "No published changes."
+            exit 0
+          fi
+          git commit -m "Publish SVG Workshop lesson 01"
+          git push origin HEAD:main
