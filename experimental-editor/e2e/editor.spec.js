@@ -82,3 +82,16 @@ test("lesson 1 opens with SVG illustrations and loads an editable radius exercis
   await expect(page.locator(".cm-content")).toContainText('r="45"');
   await expect(page.locator("#preview svg circle").first()).toHaveAttribute("r", "45");
 });
+
+test("starter SVG canvas uses the 200 by 95 mm postcard format", async ({ page }) => {
+  await page.goto("/");
+  const svg = page.locator("#preview svg");
+  await expect(svg).toHaveAttribute("width", "200mm");
+  await expect(svg).toHaveAttribute("height", "95mm");
+  await expect(svg).toHaveAttribute("viewBox", "0 0 400 190");
+  const ratio = await svg.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return box.width / box.height;
+  });
+  expect(ratio).toBeCloseTo(200 / 95, 2);
+});
