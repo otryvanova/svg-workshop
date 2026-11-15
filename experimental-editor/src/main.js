@@ -308,11 +308,11 @@ function downloadCurrentSvg() {
   const source = view.state.doc.toString();
   const baseName = saveNameInput.value
     .trim()
-    .replace(/\\.svg$/i, "")
-    .replace(/[<>:"/\\\\|?*\\x00-\\x1F]/g, "-")
-    .replace(/\\s+/g, "-")
+    .replace(/\.svg$/i, "")
+    .replace(/[<>:"\/\\|?*\x00-\x1F]/g, "-")
+    .replace(/\s+/g, "-")
     .replace(/^-+|-+$/g, "") || "my-postcard";
-  const blob = new Blob(["\\uFEFF", source], { type: "image/svg+xml;charset=utf-8" });
+  const blob = new Blob(["\uFEFF", source], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -323,7 +323,6 @@ function downloadCurrentSvg() {
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-
 saveButton.addEventListener("click", downloadCurrentSvg);
 renderPreview(initialSVG);
 updateSearchCountOnly();
