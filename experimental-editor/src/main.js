@@ -89,6 +89,7 @@ function selectedElement() {
 }
 
 function setSelection(id) {
+  if (selectedId !== id) activeGradientStopIndex = null;
   selectedId = id;
   preview.querySelectorAll("[data-editor-id], [data-id]").forEach((element) => {
     element.classList.toggle("is-selected", getElementId(element) === selectedId);
@@ -132,6 +133,7 @@ function renderInspector() {
     if (name === "fill" || name === "stroke") {
       wrapper.classList.add("property-color");
       input.addEventListener("focus", () => {
+        activeGradientStopIndex = null;
         activeColorAttribute = name;
         updatePaletteTargetState();
       });
@@ -145,6 +147,7 @@ function renderInspector() {
       picker.setAttribute("aria-label", "Выбрать цвет " + name);
       picker.title = "Выбрать цвет " + name;
       picker.addEventListener("focus", () => {
+        activeGradientStopIndex = null;
         activeColorAttribute = name;
         updatePaletteTargetState();
       });
@@ -181,7 +184,7 @@ function renderInspector() {
     targetButton.addEventListener("click", () => {
       activeColorAttribute = attribute;
       activeGradientStopIndex = null;
-      updatePaletteTargetState();
+      renderInspector();
     });
     targets.append(targetButton);
   }
