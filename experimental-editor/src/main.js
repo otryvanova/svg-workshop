@@ -45,6 +45,10 @@ root.innerHTML = `
         <button id="add-ellipse" type="button">＋ Эллипс</button>
         <button id="delete-object" type="button" disabled>Удалить объект</button>
       </div>
+      <div class="interaction-help" role="note">
+        <strong>Как работать с фигурами</strong>
+        <span>Щёлкни по фигуре, чтобы выбрать. Чтобы переместить — зажми левую кнопку мыши на фигуре и перетащи. Свойства выбранной фигуры находятся ниже, SVG-код — слева.</span>
+      </div>
       <div id="preview" class="preview" aria-label="Предпросмотр SVG"></div>
       <section id="inspector" class="inspector">
         <div class="inspector-empty">Выбери фигуру на рабочем поле, чтобы изменить её свойства.</div>
@@ -174,6 +178,7 @@ function bindSelectableElement(element) {
     event.preventDefault();
     event.stopPropagation();
     setSelection(id);
+    element.style.cursor = "grabbing";
     element.setPointerCapture?.(event.pointerId);
     const svg = element.ownerSVGElement;
     const matrix = svg.getScreenCTM();
@@ -198,6 +203,7 @@ function bindSelectableElement(element) {
       element.removeEventListener("pointermove", move);
       element.removeEventListener("pointerup", end);
       element.removeEventListener("pointercancel", end);
+      element.style.cursor = "grab";
       const updated = {
         [xName]: element.getAttribute(xName),
         [yName]: element.getAttribute(yName)
@@ -300,14 +306,14 @@ const lessonSamples = {
   <path d="M0 95 H400 M200 0 V190"
         fill="none" stroke="#cbd5e1" stroke-width="1"
         stroke-dasharray="5 5"/>
-  <circle cx="200" cy="95" r="35"
+  <circle data-id="lesson-canvas-circle" cx="200" cy="95" r="35"
           fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
   <circle cx="200" cy="95" r="3" fill="#2563eb"/>
 </svg>`,
   radius: `<svg xmlns="http://www.w3.org/2000/svg"
      width="200mm" height="95mm" viewBox="0 0 400 190">
   <rect width="400" height="190" fill="#ffffff"/>
-  <circle cx="150" cy="95" r="45"
+  <circle data-id="lesson-radius-circle" cx="150" cy="95" r="45"
           fill="#dbeafe" fill-opacity="0.65"
           stroke="#2563eb" stroke-width="2"/>
   <circle cx="150" cy="95" r="3" fill="#2563eb"/>
