@@ -1,10 +1,11 @@
 {
   "name": "svg-workshop-experimental-editor",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "preview": "vite preview --host 0.0.0.0",
     "build": "vite build",
     "test": "vitest run && playwright test"
   },

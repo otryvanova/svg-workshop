@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("CodeMirror accepts typing, deletion, selection replacement and undo", async ({ page }) => {
-  await page.goto("./");
+  await page.goto("/");
   const editor = page.locator(".cm-content");
   await expect(editor).toBeVisible();
   await editor.click();
@@ -22,8 +22,8 @@ test("CodeMirror accepts typing, deletion, selection replacement and undo", asyn
   await expect(page.locator("#preview svg circle[data-id='circle-a']")).toHaveAttribute("fill", "#123456");
 });
 
-test("visible search finds source text", async ({ page }) => {
-  await page.goto("./");
+test("visible search finds source text without case sensitivity", async ({ page }) => {
+  await page.goto("/");
   await page.locator("#search-input").fill("CIRCLE");
   await expect(page.locator("#search-count")).toHaveText("2 совпадений");
   await page.locator("#next").click();
@@ -31,7 +31,7 @@ test("visible search finds source text", async ({ page }) => {
 });
 
 test("dragging a circle writes its coordinates back to the SVG source", async ({ page }) => {
-  await page.goto("./");
+  await page.goto("/");
   const circle = page.locator("#preview circle[data-id='circle-a']");
   const before = await circle.getAttribute("cx");
   const box = await circle.boundingBox();
@@ -40,4 +40,29 @@ test("dragging a circle writes its coordinates back to the SVG source", async ({
   await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2 + 20, { steps: 4 });
   await page.mouse.up();
   await expect.poll(async () => page.locator(".cm-content").innerText()).not.toContain(`cx="${before}"`);
+});
+
+test("adds a rectangle and edits its properties in the inspector", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#add-rect").click();
+  const rect = page.locator("#preview rect[data-editor-id]");
+  await expect(rect).toBeVisible();
+  await expect(page.locator("#inspector")).toContainText("Свойства объекта");
+  await page.locator('#inspector input[data-attribute="x"]').fill("210");
+  await page.locator('#inspector input[data-attribute="x"]').press("Enter");
+  await expect(rect).toHaveAttribute("x", "210");
+  await expect(page.locator(".cm-content")).toContainText('x="210"');
+  await page.locator('#inspector input[data-attribute="fill"]').fill("#abcdef");
+  await page.locator('#inspector input[data-attribute="fill"]').press("Enter");
+  await expect(rect).toHaveAttribute("fill", "#abcdef");
+});
+
+test("deletes a selected new shape from code and preview", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#add-circle").click();
+  const circle = page.locator("#preview circle[data-editor-id]");
+  await expect(circle).toBeVisible();
+  await page.locator("#delete-object").click();
+  await expect(circle).toHaveCount(0);
+  await expect(page.locator(".cm-content")).not.toContainText("shape-circle-1");
 });
