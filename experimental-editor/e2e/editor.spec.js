@@ -156,3 +156,27 @@ test("downloads the current SVG artwork with the chosen file name", async ({ pag
   expect(downloaded).toContain('width="200mm"');
   expect(downloaded).toContain('viewBox="0 0 400 190"');
 });
+
+
+test("visual palette applies a swatch to the selected fill or stroke", async ({ page }) => {
+  await page.goto("/");
+  const circle = page.locator('#preview circle[data-id="circle-a"]');
+  await circle.click();
+  await expect(page.locator('#inspector input[data-color-picker="fill"]')).toBeVisible();
+  await page.locator('#inspector [data-color-target="stroke"]').click();
+  await page.locator('#inspector [data-color-swatch="#c74735"]').click();
+  await expect(circle).toHaveAttribute("stroke", "#c74735");
+  await expect(circle).toHaveAttribute("fill", "#1f6f50");
+});
+
+test("native color picker updates the selected shape", async ({ page }) => {
+  await page.goto("/");
+  const circle = page.locator('#preview circle[data-id="circle-a"]');
+  await circle.click();
+  await page.locator('#inspector input[data-color-picker="fill"]').evaluate((input) => {
+    input.value = "#336699";
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await expect(circle).toHaveAttribute("fill", "#336699");
+  await expect(page.locator(".cm-content")).toContainText('fill="#336699"');
+});
