@@ -37,3 +37,35 @@ describe("SVG source updates", () => {
     expect(countMatches("circle", "")).toBe(0);
   });
 });
+
+ 
+describe("SVG gradient source updates", () => {
+  it("creates and reads linear gradient stops and opacity", async () => {
+    const { upsertGradientDefinition, readGradientDefinition } = await import("../src/editor-utils.js");
+    const source = '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>';
+    const next = upsertGradientDefinition(source, "g1", "linearGradient", [
+      { offset: 0, color: "#123456", opacity: 1 },
+      { offset: 100, color: "#ffffff", opacity: 0.5 }
+    ]);
+    expect(next).toContain("<defs>");
+    expect(readGradientDefinition(next, "g1")).toEqual({
+      id: "g1", type: "linearGradient",
+      stops: [
+        { offset: 0, color: "#123456", opacity: 1 },
+        { offset: 100, color: "#ffffff", opacity: 0.5 }
+      ]
+    });
+  });
+  it("replaces a linear gradient with a radial one without duplicating its id", async () => {
+    const { upsertGradientDefinition, readGradientDefinition } = await import("../src/editor-utils.js");
+    const initial = upsertGradientDefinition("<svg><defs></defs><circle/></svg>", "g2", "linearGradient", [
+      { offset: 0, color: "#000000" }, { offset: 100, color: "#ffffff" }
+    ]);
+    const radial = upsertGradientDefinition(initial, "g2", "radialGradient", [
+      { offset: 0, color: "#c74735" }, { offset: 100, color: "#ffffff" }
+    ]);
+    expect((radial.match(/id="g2"/g) || [])).toHaveLength(1);
+    expect(readGradientDefinition(radial, "g2")?.type).toBe("radialGradient");
+    expect(radial).toContain('cx="50%" cy="50%" r="50%"');
+  });
+});

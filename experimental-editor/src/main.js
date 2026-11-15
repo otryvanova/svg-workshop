@@ -7,6 +7,8 @@ import {
   addSvgElement,
   countMatches,
   removeSvgElement,
+  readGradientDefinition,
+  upsertGradientDefinition,
   updateElementAttributes
 } from "./editor-utils.js";
 import "./style.css";
@@ -66,6 +68,8 @@ let view;
 let syncingFromCanvas = false;
 let selectedId = null;
 let activeColorAttribute = "fill";
+let activeGradientStopIndex = null;
+let preferredGradientType = "linearGradient";
 const editorHost = document.querySelector("#editor");
 const preview = document.querySelector("#preview");
 const status = document.querySelector("#status");
@@ -156,6 +160,8 @@ function renderInspector() {
     grid.append(wrapper);
   }
 
+  inspector.append(buildGradientPanel(element));
+
   const palette = document.createElement("section");
   palette.className = "color-palette";
   palette.setAttribute("aria-label", "Палитра цветов");
@@ -164,7 +170,7 @@ function renderInspector() {
   const paletteTitle = document.createElement("strong");
   paletteTitle.textContent = "Палитра";
   const paletteTargetLabel = document.createElement("span");
-  paletteTargetLabel.textContent = "Применить к:";
+  paletteTargetLabel.textContent = activeGradientStopIndex === null ? "Применить к:" : "Цвет стопа " + (activeGradientStopIndex + 1) + ":";
   const targets = document.createElement("div");
   targets.className = "palette-targets";
   for (const [attribute, label] of [["fill", "Заливка"], ["stroke", "Обводка"]]) {
@@ -174,6 +180,7 @@ function renderInspector() {
     targetButton.textContent = label;
     targetButton.addEventListener("click", () => {
       activeColorAttribute = attribute;
+      activeGradientStopIndex = null;
       updatePaletteTargetState();
     });
     targets.append(targetButton);
@@ -207,7 +214,10 @@ function renderInspector() {
     swatch.style.backgroundColor = color;
     swatch.title = label + " · " + color;
     swatch.setAttribute("aria-label", "Выбрать цвет " + label + " " + color);
-    swatch.addEventListener("click", () => updateSelectedAttribute(activeColorAttribute, color));
+    swatch.addEventListener("click", () => {
+      if (activeGradientStopIndex !== null) updateSelectedGradientStop(activeGradientStopIndex, { color });
+      else updateSelectedAttribute(activeColorAttribute, color);
+    });
     swatches.append(swatch);
   }
   palette.append(paletteHeader, swatches);
@@ -221,6 +231,192 @@ function renderInspector() {
     });
   }
   updatePaletteTargetState();
+}
+
+
+function currentGradientForTarget() {
+  const element = selectedElement();
+  if (!element) return null;
+  const reference = (element.getAttribute(activeColorAttribute) || "").match(/url\(\s*#([^\s)]+)\s*\)/);
+  return reference ? readGradientDefinition(view.state.doc.toString(), reference[1]) : null;
+}
+
+function applyEditorSource(next) {
+  const source = view.state.doc.toString();
+  if (next === source) return;
+  syncingFromCanvas = true;
+  view.dispatch({ changes: { from: 0, to: source.length, insert: next } });
+  syncingFromCanvas = false;
+  renderPreview(next);
+  setSelection(selectedId);
+}
+
+function saveGradient(id, type, stops, applyToObject = false) {
+  let next = upsertGradientDefinition(view.state.doc.toString(), id, type, stops);
+  if (applyToObject) next = updateElementAttributes(next, selectedId, { [activeColorAttribute]: "url(#" + id + ")" });
+  applyEditorSource(next);
+}
+
+function createSelectedGradient() {
+  const element = selectedElement();
+  if (!element) return;
+  const current = element.getAttribute(activeColorAttribute) || "#1f6f50";
+  const firstColor = current.startsWith("url(") ? "#1f6f50" : toColorPickerValue(current);
+  const baseId = "gradient-" + String(selectedId).replace(/[^a-zA-Z0-9_-]/g, "-") + "-" + activeColorAttribute;
+  const source = view.state.doc.toString();
+  let id = baseId, suffix = 2;
+  while (source.includes('id="' + id + '"')) id = baseId + "-" + suffix++;
+  saveGradient(id, preferredGradientType, [
+    { offset: 0, color: firstColor, opacity: 1 },
+    { offset: 100, color: "#ffffff", opacity: 1 }
+  ], true);
+  activeGradientStopIndex = 0;
+}
+
+function updateSelectedGradientStop(index, patch) {
+  const gradient = currentGradientForTarget();
+  if (!gradient || !gradient.stops[index]) return;
+  const stops = gradient.stops.map((stop, i) => i === index ? { ...stop, ...patch } : { ...stop });
+  saveGradient(gradient.id, gradient.type, stops);
+}
+
+function updateSelectedGradientType(type) {
+  preferredGradientType = type;
+  const gradient = currentGradientForTarget();
+  if (gradient) saveGradient(gradient.id, type, gradient.stops);
+}
+
+function addGradientStop() {
+  const gradient = currentGradientForTarget();
+  if (!gradient) return;
+  const sorted = [...gradient.stops].sort((a, b) => a.offset - b.offset);
+  let maxGap = -1, offset = 50;
+  for (let i = 0; i < sorted.length - 1; i += 1) {
+    const gap = sorted[i + 1].offset - sorted[i].offset;
+    if (gap > maxGap) { maxGap = gap; offset = (sorted[i].offset + sorted[i + 1].offset) / 2; }
+  }
+  const nearest = sorted.reduce((best, stop) =>
+    Math.abs(stop.offset - offset) < Math.abs(best.offset - offset) ? stop : best, sorted[0]);
+  const stops = [...gradient.stops, { offset, color: nearest.color, opacity: nearest.opacity }].sort((a, b) => a.offset - b.offset);
+  activeGradientStopIndex = stops.findIndex((stop) => stop.offset === offset);
+  saveGradient(gradient.id, gradient.type, stops);
+}
+
+function removeGradientStop(index) {
+  const gradient = currentGradientForTarget();
+  if (!gradient || gradient.stops.length <= 2) return;
+  activeGradientStopIndex = null;
+  saveGradient(gradient.id, gradient.type, gradient.stops.filter((_, i) => i !== index));
+}
+
+function buildGradientPanel(element) {
+  const panel = document.createElement("section");
+  panel.className = "gradient-editor";
+  panel.setAttribute("aria-label", "Редактор градиента");
+  const header = document.createElement("div");
+  header.className = "gradient-editor-header";
+  const title = document.createElement("strong");
+  title.textContent = "Градиент";
+  const target = document.createElement("span");
+  target.textContent = (activeColorAttribute === "fill" ? "Заливка" : "Обводка") + " объекта";
+  header.append(title, target);
+  panel.append(header);
+
+  const source = view.state.doc.toString();
+  const raw = element.getAttribute(activeColorAttribute) || "";
+  const reference = raw.match(/url\(\s*#([^\s)]+)\s*\)/);
+  const gradient = reference ? readGradientDefinition(source, reference[1]) : null;
+  const controls = document.createElement("div");
+  controls.className = "gradient-controls";
+  const typeLabel = document.createElement("label");
+  typeLabel.textContent = "Тип";
+  const typeSelect = document.createElement("select");
+  typeSelect.id = "gradient-type";
+  typeSelect.setAttribute("aria-label", "Тип градиента");
+  for (const [value, label] of [["linearGradient", "Линейный"], ["radialGradient", "Радиальный"]]) {
+    const option = document.createElement("option");
+    option.value = value; option.textContent = label; typeSelect.append(option);
+  }
+  typeSelect.value = gradient?.type || preferredGradientType;
+  preferredGradientType = typeSelect.value;
+  typeSelect.addEventListener("change", () => updateSelectedGradientType(typeSelect.value));
+  typeLabel.append(typeSelect);
+  const create = document.createElement("button");
+  create.type = "button"; create.id = "create-gradient"; create.textContent = "Создать градиент";
+  create.hidden = Boolean(gradient);
+  create.addEventListener("click", createSelectedGradient);
+  controls.append(typeLabel, create);
+  panel.append(controls);
+
+  if (gradient) {
+    const list = document.createElement("div");
+    list.className = "gradient-stop-list";
+    gradient.stops.forEach((stop, index) => {
+      const row = document.createElement("div");
+      row.className = "gradient-stop-row";
+      row.dataset.gradientStop = String(index);
+      if (activeGradientStopIndex === index) row.classList.add("is-active");
+
+      const select = document.createElement("button");
+      select.type = "button"; select.className = "gradient-stop-select";
+      select.textContent = "Стоп " + (index + 1);
+      select.setAttribute("aria-label", "Выбрать цветовой стоп " + (index + 1));
+      select.addEventListener("click", () => {
+        activeGradientStopIndex = index;
+        list.querySelectorAll(".gradient-stop-row").forEach((item) => item.classList.toggle("is-active", Number(item.dataset.gradientStop) === index));
+        const label = inspector.querySelector(".palette-header > span");
+        if (label) label.textContent = "Цвет стопа " + (index + 1) + ":";
+      });
+
+      const picker = document.createElement("input");
+      picker.type = "color"; picker.className = "gradient-stop-color";
+      picker.value = toColorPickerValue(stop.color);
+      picker.setAttribute("aria-label", "Цвет стопа " + (index + 1));
+      picker.addEventListener("focus", () => { activeGradientStopIndex = index; });
+      picker.addEventListener("change", () => { activeGradientStopIndex = index; updateSelectedGradientStop(index, { color: picker.value }); });
+
+      const meta = document.createElement("div");
+      meta.className = "gradient-stop-meta";
+      const offsetLabel = document.createElement("label");
+      offsetLabel.textContent = "Позиция %";
+      const offset = document.createElement("input");
+      offset.type = "number"; offset.min = "0"; offset.max = "100"; offset.step = "1";
+      offset.value = String(Math.round(stop.offset)); offset.dataset.stopOffset = String(index);
+      offset.setAttribute("aria-label", "Положение стопа " + (index + 1) + " в процентах");
+      offset.addEventListener("change", () => updateSelectedGradientStop(index, { offset: Number(offset.value) }));
+      offsetLabel.append(offset);
+
+      const opacityLabel = document.createElement("label");
+      opacityLabel.textContent = "Непрозрачность %";
+      const opacity = document.createElement("input");
+      opacity.type = "number"; opacity.min = "0"; opacity.max = "100"; opacity.step = "1";
+      opacity.value = String(Math.round(stop.opacity * 100)); opacity.dataset.stopOpacity = String(index);
+      opacity.setAttribute("aria-label", "Непрозрачность стопа " + (index + 1) + " в процентах");
+      opacity.addEventListener("change", () => updateSelectedGradientStop(index, { opacity: Number(opacity.value) / 100 }));
+      opacityLabel.append(opacity);
+      meta.append(offsetLabel, opacityLabel);
+
+      const remove = document.createElement("button");
+      remove.type = "button"; remove.className = "gradient-stop-remove";
+      remove.textContent = "×"; remove.title = "Удалить цветовой стоп";
+      remove.disabled = gradient.stops.length <= 2;
+      remove.addEventListener("click", () => removeGradientStop(index));
+      row.append(select, picker, meta, remove);
+      list.append(row);
+    });
+    panel.append(list);
+    const add = document.createElement("button");
+    add.type = "button"; add.id = "add-gradient-stop";
+    add.textContent = "＋ Добавить цветовую точку";
+    add.addEventListener("click", addGradientStop);
+    panel.append(add);
+  } else {
+    const hint = document.createElement("p");
+    hint.className = "gradient-editor-hint";
+    hint.textContent = "Создай линейный или радиальный градиент для заливки либо обводки. Цветовые точки настраиваются общей палитрой.";
+    panel.append(hint);
+  }
+  return panel;
 }
 
 function toColorPickerValue(value) {

@@ -180,3 +180,26 @@ test("native color picker updates the selected shape", async ({ page }) => {
   await expect(circle).toHaveAttribute("fill", "#336699");
   await expect(page.locator(".cm-content")).toContainText('fill="#336699"');
 });
+
+
+test("creates and edits a multi-stop gradient with the shared palette", async ({ page }) => {
+  await page.goto("/");
+  const circle = page.locator('#preview circle[data-id="circle-a"]');
+  await circle.click();
+  await page.locator("#create-gradient").click();
+  await expect(circle).toHaveAttribute("fill", /url\(#gradient-/);
+  await expect(page.locator("#preview linearGradient stop")).toHaveCount(2);
+  await page.locator('#inspector [data-gradient-stop="0"] .gradient-stop-select').click();
+  await page.locator('#inspector [data-color-swatch="#c74735"]').click();
+  await expect(page.locator("#preview linearGradient stop").first()).toHaveAttribute("stop-color", "#c74735");
+  await page.locator('#inspector [data-stop-offset="0"]').fill("18");
+  await page.locator('#inspector [data-stop-offset="0"]').press("Tab");
+  await expect(page.locator("#preview linearGradient stop").first()).toHaveAttribute("offset", "18%");
+  await page.locator("#add-gradient-stop").click();
+  await expect(page.locator("#preview linearGradient stop")).toHaveCount(3);
+  await page.locator("#gradient-type").selectOption("radialGradient");
+  await expect(page.locator("#preview radialGradient stop")).toHaveCount(3);
+  await page.locator('#inspector [data-stop-opacity="0"]').fill("45");
+  await page.locator('#inspector [data-stop-opacity="0"]').press("Tab");
+  await expect(page.locator("#preview radialGradient stop").first()).toHaveAttribute("stop-opacity", "0.45");
+});
