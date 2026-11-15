@@ -68,3 +68,17 @@ test("deletes a selected new shape from code and preview", async ({ page }) => {
   await expect(circle).toHaveCount(0);
   await expect(page.locator(".cm-content")).not.toContainText("shape-circle-1");
 });
+
+test("lesson 1 opens with SVG illustrations and loads an editable radius exercise", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#lesson-toggle").click();
+  await expect(page.locator("#lesson-view")).toBeVisible();
+  await expect(page.locator("#lesson-view")).toContainText("Знакомство с SVG");
+  const illustrations = page.locator("#lesson-view .lesson-illustration img");
+  await expect(illustrations).toHaveCount(2);
+  await expect.poll(async () => illustrations.evaluateAll((imgs) => imgs.every((img) => img.complete && img.naturalWidth > 0))).toBe(true);
+  await page.locator('[data-lesson-exercise="radius"]').click();
+  await expect(page.locator("#lesson-view")).toBeHidden();
+  await expect(page.locator(".cm-content")).toContainText('r="45"');
+  await expect(page.locator("#preview svg circle")).toHaveAttribute("r", "45");
+});
