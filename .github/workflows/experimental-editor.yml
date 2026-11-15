@@ -1,4 +1,4 @@
-name: Experimental SVG editor
+name: Experimental SVG editor checks
 on:
   push:
     branches: [experiment/vite-codemirror-editor]
@@ -8,10 +8,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
 concurrency:
-  group: experimental-pages
+  group: experimental-editor-checks
   cancel-in-progress: true
 jobs:
   build-and-test:
@@ -24,20 +22,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: experimental-editor/package-lock.json
       - run: npm install
+      - run: npx playwright install --with-deps chromium
       - run: npm test
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: experimental-svg-editor-build
           path: experimental-editor/dist
-  deploy:
-    needs: build-and-test
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
