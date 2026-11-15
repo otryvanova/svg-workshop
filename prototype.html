@@ -335,7 +335,8 @@ view = new EditorView({
       xml(),
       commentMatchField,
       EditorView.updateListener.of(update => {
-        if (update.docChanged) refreshSearch();
+        // Do not dispatch a nested transaction while CodeMirror is processing an update.
+        if (update.docChanged) queueMicrotask(refreshSearch);
       })
     ]
   }),
