@@ -6,9 +6,9 @@ export function updateCircleAttribute(source, id, attribute, value) {
   if (!match) return source;
   const tag = match[0];
   const attrPattern = new RegExp("(\\b"+attribute+"\\s*=\\s*)(['\"])[^'\"]*\\2", "i");
-  const replacement = tagPattern.test(source) && attrPattern.test(tag)
+  const replacement = attrPattern.test(tag)
     ? tag.replace(attrPattern, "$1\""+String(value)+"\"")
-    : tag.replace(/\\s*\\/?>$/, (end) => " "+attribute+"=\""+String(value)+"\""+end);
+    : tag.replace(/\s*\/?>$/, (end) => " "+attribute+"=\""+String(value)+"\""+end);
   return source.replace(tag, replacement);
 }
 
