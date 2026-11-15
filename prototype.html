@@ -103,6 +103,7 @@ function applyCodeToCanvas() {
     else canvas.removeAttribute(attr);
   }
   canvas.replaceChildren(...Array.from(root.childNodes).map(n => document.importNode(n, true)));
+  SVG(canvas).attr("viewBox", viewBox || "0 0 200 95");
   canvas.querySelectorAll('circle[data-editable="true"]').forEach(circle => {
     circle.addEventListener("pointerdown", startDrag);
   });
@@ -131,8 +132,7 @@ function startDrag(event) {
     const local = p.matrixTransform(canvas.getScreenCTM().inverse());
     const x = +(startX + local.x - start.x).toFixed(2);
     const y = +(startY + local.y - start.y).toFixed(2);
-    target.setAttribute("cx", String(x));
-    target.setAttribute("cy", String(y));
+    SVG(target).attr({cx:String(x), cy:String(y)});
     updateCodeAttribute(id, "cx", x);
     updateCodeAttribute(id, "cy", y);
   }
@@ -149,20 +149,37 @@ function startDrag(event) {
 
 function updateCodeAttribute(id, attribute, value) {
   const source = currentCode();
-  const escapedId = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const elementPattern = new RegExp("(<[^>]*\\bid=[\"']" + escapedId + "[\"'][^>]*>)");
+  const elementPattern = new RegExp("(<[^>]*\\bid=[\"']" + id + "[\"'][^>]*>)");
   const match = source.match(elementPattern);
   if (!match) {
     setStatus(codeStatus, "Объект перемещён на холсте, но его строка не найдена в коде.");
     return;
   }
+
   const originalTag = match[1];
-  const attributePattern = new RegExp("(\\b" + attribute + "=[\"'])[^\\"']*([\"'])");
-  const updatedTag = attributePattern.test(originalTag)
-    ? originalTag.replace(attributePattern, "$1" + value + "$2")
-    : originalTag.replace(/\s*\/?>$/, " " + attribute + '="' + value + '"' + (originalTag.endsWith("/>") ? "/>" : ">"));
-  const next = source.replace(originalTag, updatedTag);
-  const pos = view.state.doc.toString().indexOf(originalTag);
+  const attributePrefix = attribute + "=";
+  const attributeStart = originalTag.indexOf(attributePrefix);
+  let updatedTag;
+
+  if (attributeStart >= 0) {
+    const quote = originalTag[attributeStart + attributePrefix.length];
+    if (quote !== '"' && quote !== "'") {
+      setStatus(codeStatus, "Не удалось безопасно обновить атрибут " + attribute + ".");
+      return;
+    }
+    const valueStart = attributeStart + attributePrefix.length + 1;
+    const valueEnd = originalTag.indexOf(quote, valueStart);
+    if (valueEnd < 0) {
+      setStatus(codeStatus, "Не удалось найти конец значения атрибута " + attribute + ".");
+      return;
+    }
+    updatedTag = originalTag.slice(0, valueStart) + String(value) + originalTag.slice(valueEnd);
+  } else {
+    const insertAt = originalTag.endsWith("/>") ? originalTag.length - 2 : originalTag.length - 1;
+    updatedTag = originalTag.slice(0, insertAt) + " " + attribute + '="' + value + '"' + originalTag.slice(insertAt);
+  }
+
+  const pos = source.indexOf(originalTag);
   if (pos >= 0) {
     view.dispatch({changes:{from:pos,to:pos+originalTag.length,insert:updatedTag}});
   }
