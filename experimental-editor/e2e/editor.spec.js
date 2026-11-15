@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("CodeMirror accepts typing, deletion, selection replacement and undo", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   const editor = page.locator(".cm-content");
   await expect(editor).toBeVisible();
   await editor.click();
@@ -23,15 +23,15 @@ test("CodeMirror accepts typing, deletion, selection replacement and undo", asyn
 });
 
 test("visible search finds source text", async ({ page }) => {
-  await page.goto("/");
-  await page.locator("#search-input").fill("circle");
+  await page.goto("./");
+  await page.locator("#search-input").fill("CIRCLE");
   await expect(page.locator("#search-count")).toHaveText("2 совпадений");
   await page.locator("#next").click();
   await expect(page.locator(".cm-selectionBackground")).toBeVisible();
 });
 
 test("dragging a circle writes its coordinates back to the SVG source", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   const circle = page.locator("#preview circle[data-id='circle-a']");
   const before = await circle.getAttribute("cx");
   const box = await circle.boundingBox();
