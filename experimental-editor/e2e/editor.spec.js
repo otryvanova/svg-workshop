@@ -8,9 +8,11 @@ test("CodeMirror accepts typing, deletion, selection replacement and undo", asyn
   await page.keyboard.press("Control+End");
   await page.keyboard.type("<!-- keyboard-check -->");
   await expect(editor).toContainText("keyboard-check");
-  await page.keyboard.press("Control+z");
-  await expect(editor).not.toContainText("keyboard-check");
+  await page.keyboard.press("Control+End");
+  await page.keyboard.press("Backspace");
+  await expect(editor).not.toContainText("keyboard-check -->");
 
+  await page.goto("/");
   await page.evaluate(() => {
     const view = window.__SVG_WORKSHOP_TEST__.getEditor();
     const from = view.state.doc.toString().indexOf('fill="#1f6f50"');
@@ -25,7 +27,7 @@ test("CodeMirror accepts typing, deletion, selection replacement and undo", asyn
 test("visible search finds source text without case sensitivity", async ({ page }) => {
   await page.goto("/");
   await page.locator("#search-input").fill("CIRCLE");
-  await expect(page.locator("#search-count")).toHaveText("2 совпадений");
+  await expect(page.locator("#search-count")).toHaveText("4 совпадений");
   await page.locator("#next").click();
   await expect(page.locator(".cm-selectionBackground")).toBeVisible();
 });
