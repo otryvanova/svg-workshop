@@ -109,7 +109,8 @@ function applySearch(direction) {
   if (!searchInput.value) return;
   view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: searchInput.value })) });
   view.focus();
-  view.dispatch(direction > 0 ? findNext(view) : findPrevious(view));
+  if (direction > 0) findNext(view);
+  else findPrevious(view);
 }
 
 view = new EditorView({
