@@ -128,5 +128,9 @@ test("the circle in the canvas lesson is selectable and draggable", async ({ pag
   await page.mouse.move(box.x + box.width / 2 + 44, box.y + box.height / 2 + 20, { steps: 4 });
   await page.mouse.up();
   await expect.poll(async () => Number(await circle.getAttribute("cx"))).not.toBe(before);
-  await expect.poll(async () => page.locator(".cm-content").innerText()).not.toContain(`cx="${before}"`);
+  await expect.poll(async () => {
+    const source = await page.locator(".cm-content").innerText();
+    const match = source.match(/<circle data-id="lesson-canvas-circle" cx="([^"]+)"/);
+    return Number(match?.[1]);
+  }).not.toBe(before);
 });
