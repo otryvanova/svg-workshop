@@ -44,7 +44,12 @@ root.innerHTML = `
         <button id="add-circle" type="button">＋ Круг</button>
         <button id="add-ellipse" type="button">＋ Эллипс</button>
         <button id="delete-object" type="button" disabled>Удалить объект</button>
+        <span class="toolbar-spacer"></span>
+        <label class="save-name-label" for="save-file-name">Имя файла</label>
+        <input id="save-file-name" class="save-file-name" type="text" value="my-postcard" aria-label="Имя файла для сохранения">
+        <button id="save-svg" class="save-svg-button" type="button">Скачать SVG</button>
       </div>
+      <div class="save-help">Скачает текущий рисунок как SVG-файл. Его можно открыть и продолжить редактировать в Illustrator.</div>
       <div class="interaction-help" role="note">
         <strong>Как работать с фигурами</strong>
         <span>Щёлкни по фигуре, чтобы выбрать. Чтобы переместить — зажми левую кнопку мыши на фигуре и перетащи. Свойства выбранной фигуры находятся ниже, SVG-код — слева.</span>
@@ -295,6 +300,31 @@ document.querySelector("#add-rect").addEventListener("click", () => addShape("re
 document.querySelector("#add-circle").addEventListener("click", () => addShape("circle"));
 document.querySelector("#add-ellipse").addEventListener("click", () => addShape("ellipse"));
 deleteButton.addEventListener("click", deleteSelected);
+
+const saveButton = document.querySelector("#save-svg");
+const saveNameInput = document.querySelector("#save-file-name");
+
+function downloadCurrentSvg() {
+  const source = view.state.doc.toString();
+  const baseName = saveNameInput.value
+    .trim()
+    .replace(/\\.svg$/i, "")
+    .replace(/[<>:"/\\\\|?*\\x00-\\x1F]/g, "-")
+    .replace(/\\s+/g, "-")
+    .replace(/^-+|-+$/g, "") || "my-postcard";
+  const blob = new Blob(["\\uFEFF", source], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = baseName + ".svg";
+  link.hidden = true;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+saveButton.addEventListener("click", downloadCurrentSvg);
 renderPreview(initialSVG);
 updateSearchCountOnly();
 
