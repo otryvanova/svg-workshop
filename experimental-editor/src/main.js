@@ -293,7 +293,7 @@ renderPreview(initialSVG);
 updateSearchCountOnly();
 
 const lessonSamples = {
-  canvas: \`<svg xmlns="http://www.w3.org/2000/svg"
+  canvas: `<svg xmlns="http://www.w3.org/2000/svg"
      width="200mm" height="95mm" viewBox="0 0 400 190">
   <rect x="1" y="1" width="398" height="188"
         fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
@@ -303,8 +303,8 @@ const lessonSamples = {
   <circle cx="200" cy="95" r="35"
           fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
   <circle cx="200" cy="95" r="3" fill="#2563eb"/>
-</svg>\`,
-  radius: \`<svg xmlns="http://www.w3.org/2000/svg"
+</svg>`,
+  radius: `<svg xmlns="http://www.w3.org/2000/svg"
      width="200mm" height="95mm" viewBox="0 0 400 190">
   <rect width="400" height="190" fill="#ffffff"/>
   <circle cx="150" cy="95" r="45"
@@ -313,7 +313,7 @@ const lessonSamples = {
   <circle cx="150" cy="95" r="3" fill="#2563eb"/>
   <path d="M150 95 H195" fill="none"
         stroke="#dc6b35" stroke-width="2"/>
-</svg>\`
+</svg>`
 };
 
 const lessonButton = document.createElement("button");
@@ -327,7 +327,7 @@ const lessonView = document.createElement("main");
 lessonView.id = "lesson-view";
 lessonView.className = "lesson-view";
 lessonView.hidden = true;
-lessonView.innerHTML = \`
+lessonView.innerHTML = `
   <header class="lesson-heading">
     <div class="lesson-eyebrow">SVG-МАСТЕРСКАЯ · УЧЕБНАЯ ПРОГРАММА</div>
     <div class="lesson-heading-row">
@@ -362,15 +362,15 @@ lessonView.innerHTML = \`
   <section class="lesson-section">
     <div class="lesson-section-title"><span>02</span><div><h3>Что такое холст</h3><p>Физический размер и координатная система</p></div></div>
     <div class="lesson-example">
-      <a class="lesson-illustration" href="\${canvasIllustration}" target="_blank" rel="noopener">
-        <img src="\${canvasIllustration}" alt="Схема холста SVG с началом координат, осями X и Y и центральной точкой">
+      <a class="lesson-illustration" href="${canvasIllustration}" target="_blank" rel="noopener">
+        <img src="${canvasIllustration}" alt="Схема холста SVG с началом координат, осями X и Y и центральной точкой">
       </a>
       <div class="lesson-copy">
         <p>Холст — область, в которой размещается изображение. В нашем курсе базовый формат документа — открытка <strong>200 × 95 мм</strong>.</p>
         <p>Атрибуты <code>width</code> и <code>height</code> задают физический размер. Атрибут <code>viewBox</code> описывает внутреннюю координатную область, с которой работает SVG.</p>
         <p>В примере <code>viewBox="0 0 400 190"</code>: начало координат находится в левом верхнем углу; X увеличивается вправо, Y — вниз. Центр этой области — точка (200, 95).</p>
         <p class="lesson-note">При соотношении 400 × 190 единиц и физическом размере 200 × 95 мм одна внутренняя единица соответствует 0,5 мм.</p>
-        <a class="lesson-source-link" href="\${canvasIllustration}" target="_blank" rel="noopener">Открыть исходный SVG</a>
+        <a class="lesson-source-link" href="${canvasIllustration}" target="_blank" rel="noopener">Открыть исходный SVG</a>
       </div>
     </div>
   </section>
@@ -378,8 +378,8 @@ lessonView.innerHTML = \`
   <section class="lesson-section">
     <div class="lesson-section-title"><span>03</span><div><h3>Разберём окружность и радиус</h3><p>Три параметра, которые задают круг</p></div></div>
     <div class="lesson-example">
-      <a class="lesson-illustration" href="\${radiusIllustration}" target="_blank" rel="noopener">
-        <img src="\${radiusIllustration}" alt="Окружность с отмеченным центром и радиусом">
+      <a class="lesson-illustration" href="${radiusIllustration}" target="_blank" rel="noopener">
+        <img src="${radiusIllustration}" alt="Окружность с отмеченным центром и радиусом">
       </a>
       <div class="lesson-copy">
         <p>Элемент <code>&lt;circle&gt;</code> описывает окружность с помощью трёх основных параметров:</p>
@@ -389,7 +389,7 @@ lessonView.innerHTML = \`
           <li><code>r</code> — радиус, расстояние от центра до линии окружности.</li>
         </ul>
         <p>Например, <code>&lt;circle cx="150" cy="95" r="45" /&gt;</code> задаёт окружность с центром (150, 95) и радиусом 45 единиц.</p>
-        <a class="lesson-source-link" href="\${radiusIllustration}" target="_blank" rel="noopener">Открыть исходный SVG</a>
+        <a class="lesson-source-link" href="${radiusIllustration}" target="_blank" rel="noopener">Открыть исходный SVG</a>
       </div>
     </div>
   </section>
@@ -426,7 +426,7 @@ lessonView.innerHTML = \`
     <span>Занятие 01 · Знакомство с SVG</span>
     <button type="button" id="lesson-back">Вернуться в лабораторию</button>
   </footer>
-\`;
+`;
 root.append(lessonView);
 
 function showLesson(visible) {
