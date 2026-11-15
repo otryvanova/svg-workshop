@@ -134,3 +134,25 @@ test("the circle in the canvas lesson is selectable and draggable", async ({ pag
     return Number(match?.[1]);
   }).not.toBe(before);
 });
+
+
+test("downloads the current SVG artwork with the chosen file name", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#save-file-name").fill("my test card");
+  await page.evaluate(() => {
+    const view = window.__SVG_WORKSHOP_TEST__.getEditor();
+    const source = view.state.doc.toString();
+    const updated = source.replace('fill="#1f6f50"', 'fill="#123456"');
+    view.dispatch({ changes: { from: 0, to: source.length, insert: updated } });
+  });
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#save-svg").click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("my-test-card.svg");
+  const stream = await download.createReadStream();
+  let downloaded = "";
+  for await (const chunk of stream) downloaded += chunk.toString("utf8");
+  expect(downloaded).toContain('fill="#123456"');
+  expect(downloaded).toContain('width="200mm"');
+  expect(downloaded).toContain('viewBox="0 0 400 190"');
+});
