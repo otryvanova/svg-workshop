@@ -65,6 +65,7 @@ root.innerHTML = `
 let view;
 let syncingFromCanvas = false;
 let selectedId = null;
+let activeColorAttribute = "fill";
 const editorHost = document.querySelector("#editor");
 const preview = document.querySelector("#preview");
 const status = document.querySelector("#status");
@@ -123,9 +124,111 @@ function renderInspector() {
     input.setAttribute("aria-label", name);
     input.addEventListener("change", () => updateSelectedAttribute(name, input.value));
     input.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); updateSelectedAttribute(name, input.value); input.blur(); } });
-    wrapper.append(caption, input);
+
+    if (name === "fill" || name === "stroke") {
+      wrapper.classList.add("property-color");
+      input.addEventListener("focus", () => {
+        activeColorAttribute = name;
+        updatePaletteTargetState();
+      });
+      const controls = document.createElement("div");
+      controls.className = "color-property-controls";
+      const picker = document.createElement("input");
+      picker.type = "color";
+      picker.className = "color-picker";
+      picker.dataset.colorPicker = name;
+      picker.value = toColorPickerValue(input.value);
+      picker.setAttribute("aria-label", "Выбрать цвет " + name);
+      picker.title = "Выбрать цвет " + name;
+      picker.addEventListener("focus", () => {
+        activeColorAttribute = name;
+        updatePaletteTargetState();
+      });
+      picker.addEventListener("change", () => {
+        activeColorAttribute = name;
+        updateSelectedAttribute(name, picker.value);
+      });
+      controls.append(picker, input);
+      wrapper.append(caption, controls);
+    } else {
+      wrapper.append(caption, input);
+    }
     grid.append(wrapper);
   }
+
+  const palette = document.createElement("section");
+  palette.className = "color-palette";
+  palette.setAttribute("aria-label", "Палитра цветов");
+  const paletteHeader = document.createElement("div");
+  paletteHeader.className = "palette-header";
+  const paletteTitle = document.createElement("strong");
+  paletteTitle.textContent = "Палитра";
+  const paletteTargetLabel = document.createElement("span");
+  paletteTargetLabel.textContent = "Применить к:";
+  const targets = document.createElement("div");
+  targets.className = "palette-targets";
+  for (const [attribute, label] of [["fill", "Заливка"], ["stroke", "Обводка"]]) {
+    const targetButton = document.createElement("button");
+    targetButton.type = "button";
+    targetButton.dataset.colorTarget = attribute;
+    targetButton.textContent = label;
+    targetButton.addEventListener("click", () => {
+      activeColorAttribute = attribute;
+      updatePaletteTargetState();
+    });
+    targets.append(targetButton);
+  }
+  paletteHeader.append(paletteTitle, paletteTargetLabel, targets);
+  const swatches = document.createElement("div");
+  swatches.className = "color-swatches";
+  const colors = [
+    ["Графитовый", "#252525"],
+    ["Чёрный", "#000000"],
+    ["Белый", "#ffffff"],
+    ["Серый", "#858585"],
+    ["Песочный", "#c9b99a"],
+    ["Охра", "#c58a2b"],
+    ["Жёлтый", "#f2d35e"],
+    ["Оранжевый", "#e4773e"],
+    ["Красный", "#c74735"],
+    ["Бордовый", "#762f3c"],
+    ["Терракотовый", "#a65e46"],
+    ["Шалфейный", "#91a58c"],
+    ["Зелёный", "#1f6f50"],
+    ["Бирюзовый", "#2b8582"],
+    ["Синий", "#3465a4"],
+    ["Фиолетовый", "#76549a"]
+  ];
+  for (const [label, color] of colors) {
+    const swatch = document.createElement("button");
+    swatch.type = "button";
+    swatch.className = "color-swatch";
+    swatch.dataset.colorSwatch = color;
+    swatch.style.backgroundColor = color;
+    swatch.title = label + " · " + color;
+    swatch.setAttribute("aria-label", "Выбрать цвет " + label + " " + color);
+    swatch.addEventListener("click", () => updateSelectedAttribute(activeColorAttribute, color));
+    swatches.append(swatch);
+  }
+  palette.append(paletteHeader, swatches);
+  inspector.append(palette);
+
+  function updatePaletteTargetState() {
+    palette.querySelectorAll("[data-color-target]").forEach((button) => {
+      const isActive = button.dataset.colorTarget === activeColorAttribute;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-pressed", String(isActive));
+    });
+  }
+  updatePaletteTargetState();
+}
+
+function toColorPickerValue(value) {
+  const color = String(value || "").trim();
+  if (/^#[0-9a-f]{6}$/i.test(color)) return color;
+  const short = color.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
+  if (short) return "#" + short.slice(1).map((part) => part + part).join("");
+  return "#000000";
 }
 
 function updateSelectedAttribute(name, value) {
