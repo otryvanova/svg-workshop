@@ -95,3 +95,34 @@ test("starter SVG canvas uses the 200 by 95 mm postcard format", async ({ page }
   });
   expect(ratio).toBeCloseTo(200 / 95, 2);
 });
+
+test("new rectangles can be selected and moved with the mouse", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#add-rect").click();
+  const rect = page.locator("#preview rect[data-editor-id]");
+  await expect(rect).toBeVisible();
+  const before = Number(await rect.getAttribute("x"));
+  const box = await rect.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 36, box.y + box.height / 2 + 18, { steps: 4 });
+  await page.mouse.up();
+  await expect.poll(async () => Number(await rect.getAttribute("x"))).not.toBe(before);
+  await expect.poll(async () => page.locator(".cm-content").innerText()).not.toContain(`x="${before}"`);
+});
+
+test("the circle in the canvas lesson is selectable and draggable", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#lesson-toggle").click();
+  await page.locator('[data-lesson-exercise="canvas"]').click();
+  const circle = page.locator('#preview circle[data-id="lesson-canvas-circle"]');
+  await expect(circle).toBeVisible();
+  const before = Number(await circle.getAttribute("cx"));
+  const box = await circle.boundingBox();
+  await page.mouse.move(box.x + box.width / 2 + 14, box.y + box.height / 2 + 4);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 44, box.y + box.height / 2 + 20, { steps: 4 });
+  await page.mouse.up();
+  await expect.poll(async () => Number(await circle.getAttribute("cx"))).not.toBe(before);
+  await expect.poll(async () => page.locator(".cm-content").innerText()).not.toContain(`cx="${before}"`);
+});
