@@ -16,9 +16,10 @@ export function countMatches(source, query) {
   if (!query) return 0;
   let count = 0;
   let index = 0;
-  while ((index = source.indexOf(query, index)) !== -1) {
+  const haystack = source.toLocaleLowerCase();
+  while ((index = haystack.indexOf(needle, index)) !== -1) {
     count += 1;
-    index += query.length;
+    index += needle.length;
   }
   return count;
 }
