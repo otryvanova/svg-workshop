@@ -1,0 +1,602 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG-мастерская</title>
+
+<style>
+:root {
+  --bg: #ffffff;
+  --panel: #f6f8fa;
+  --border: #d1d9e0;
+  --text: #1f2328;
+  --muted: #656d76;
+  --blue: #0969da;
+  --green: #1a7f37;
+  --input: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Helvetica, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 14px;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.topbar {
+  height: 62px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 18px;
+}
+
+.mark {
+  width: 32px;
+  height: 32px;
+  background: #24292f;
+  color: white;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.brand {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.top-label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 245px minmax(0, 1fr);
+  min-height: calc(100vh - 62px);
+}
+
+.sidebar {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 24px 16px;
+}
+
+.sidebar-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 0 10px;
+  margin: 12px 0;
+}
+
+.nav-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.nav-button:hover { background: #eaeef2; }
+
+.nav-button.active {
+  background: #ddf4ff;
+  color: #0969da;
+  font-weight: 600;
+}
+
+.main {
+  padding: 32px clamp(20px, 4vw, 56px);
+  min-width: 0;
+}
+
+.breadcrumb {
+  color: var(--muted);
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+
+h1 {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 12px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.panel-body { padding: 18px; }
+
+.welcome {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.welcome p {
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+.button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 13px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.button:hover { background: #eaeef2; }
+
+.button.primary {
+  color: white;
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.button.primary:hover { background: #116329; }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.lab-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 340px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--input);
+  tab-size: 2;
+}
+
+textarea:focus {
+  outline: 2px solid #80bfff;
+  border-color: var(--blue);
+}
+
+.preview {
+  min-height: 340px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f6f8fa;
+  background-image:
+    linear-gradient(45deg, #eaeef2 25%, transparent 25%),
+    linear-gradient(-45deg, #eaeef2 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #eaeef2 75%),
+    linear-gradient(-45deg, transparent 75%, #eaeef2 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+  overflow: auto;
+}
+
+.preview svg {
+  width: 100%;
+  max-width: 620px;
+  height: auto;
+  background: white;
+  box-shadow: 0 2px 8px #1f23281a;
+}
+
+.status {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.lesson {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.lesson strong { display: block; margin-bottom: 5px; }
+.lesson p { margin: 0; color: var(--muted); line-height: 1.5; }
+
+.hidden { display: none; }
+
+.footer {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 32px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 12px;
+  }
+  .sidebar-title { display: none; }
+  .nav-button {
+    display: inline-block;
+    width: auto;
+    margin: 2px;
+  }
+  .main { padding: 24px 16px; }
+  .lab-grid { grid-template-columns: 1fr; }
+  .topbar { padding: 0 14px; }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="mark">S</div>
+  <div class="brand">SVG-мастерская</div>
+  <div class="top-label">/ Interactive learning environment</div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-title">Мастерская</div>
+
+    <button class="nav-button active" data-page="home">
+      Главная
+    </button>
+    <button class="nav-button" data-page="course">
+      Учебная программа
+    </button>
+    <button class="nav-button" data-page="lab">
+      SVG-лаборатория
+    </button>
+
+    <div class="sidebar-title">Мои материалы</div>
+
+    <button class="nav-button" data-page="projects">
+      Мои проекты
+    </button>
+    <button class="nav-button" data-page="library">
+      Библиотека решений
+    </button>
+  </aside>
+
+  <main class="main">
+
+    <section id="home" class="page">
+      <div class="breadcrumb">svg-workshop / home</div>
+
+      <h1>Добро пожаловать в мастерскую</h1>
+      <div class="subtitle">
+        Пространство для изучения SVG и создания векторной графики.
+      </div>
+
+      <div class="welcome">
+        <h2>От идеи к векторной графике</h2>
+        <p>
+          Здесь мы будем изучать язык SVG, экспериментировать
+          с геометрией, линиями, цветом и формами, а затем
+          собирать из них полноценные печатные открытки.
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">Начало работы</div>
+        <div class="panel-body">
+          <p>Перейди в учебную программу или открой лабораторию.</p>
+          <div class="actions">
+            <button class="button primary" data-go="course">
+              Учебная программа
+            </button>
+            <button class="button" data-go="lab">
+              Открыть лабораторию
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">Параметры проекта</div>
+        <div class="panel-body">
+          Формат открытки: <strong>200 × 95 мм</strong><br>
+          Основной формат графики: <strong>SVG</strong><br>
+          Рабочая среда: <strong>браузер</strong>
+        </div>
+      </div>
+    </section>
+
+    <section id="course" class="page hidden">
+      <div class="breadcrumb">svg-workshop / course</div>
+      <h1>Учебная программа</h1>
+      <div class="subtitle">
+        Последовательное освоение SVG через практические упражнения.
+      </div>
+
+      <div id="lessons"></div>
+    </section>
+
+    <section id="lab" class="page hidden">
+      <div class="breadcrumb">svg-workshop / laboratory</div>
+      <h1>SVG-лаборатория</h1>
+      <div class="subtitle">
+        Пиши код, экспериментируй и наблюдай за результатом.
+      </div>
+
+      <div class="actions">
+        <button class="button primary" id="update">
+          Обновить предпросмотр
+        </button>
+        <button class="button" id="reset">
+          Вернуть исходный код
+        </button>
+        <button class="button" id="download">
+          Скачать SVG
+        </button>
+      </div>
+
+      <div class="lab-grid">
+        <div class="panel">
+          <div class="panel-header">Редактор SVG</div>
+          <div class="panel-body">
+            <textarea id="code" spellcheck="false"></textarea>
+            <div class="status" id="editor-status">
+              Исходный учебный пример
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">Предпросмотр</div>
+          <div class="preview" id="preview"></div>
+          <div class="panel-body">
+            <div class="status" id="preview-status">
+              Ожидание обновления
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects" class="page hidden">
+      <div class="breadcrumb">svg-workshop / projects</div>
+      <h1>Мои проекты</h1>
+      <div class="welcome">
+        <h2>Рабочая коллекция</h2>
+        <p>
+          Здесь будут храниться твои открытки, эксперименты
+          и законченные SVG-композиции.
+        </p>
+      </div>
+      <p>Раздел находится в разработке.</p>
+    </section>
+
+    <section id="library" class="page hidden">
+      <div class="breadcrumb">svg-workshop / library</div>
+      <h1>Библиотека решений</h1>
+      <div class="welcome">
+        <h2>Коллекция приёмов</h2>
+        <p>
+          Здесь постепенно соберём примеры SVG-кода:
+          геометрические формы, орнаменты, линии, кривые,
+          текстовые элементы и композиционные решения.
+        </p>
+      </div>
+      <p>Раздел находится в разработке.</p>
+    </section>
+
+    <footer class="footer">
+      SVG-мастерская · Учебный проект · Версия 0.1
+    </footer>
+
+  </main>
+</div>
+
+<script>
+const initialSVG = `<svg xmlns="http://www.w3.org/2000/svg"
+  width="200mm" height="95mm" viewBox="0 0 200 95">
+
+  <rect width="200" height="95" fill="#ffffff"/>
+
+  <rect x="5" y="5" width="190" height="85"
+    fill="none" stroke="#1f2328" stroke-width="0.5"/>
+
+  <rect x="10" y="10" width="180" height="75"
+    fill="none" stroke="#0969da" stroke-width="0.35"/>
+
+  <circle cx="100" cy="47.5" r="20"
+    fill="none" stroke="#1f2328" stroke-width="0.7"/>
+
+  <circle cx="100" cy="47.5" r="12"
+    fill="none" stroke="#0969da" stroke-width="0.7"/>
+
+  <path d="M100 20 L100 75 M70 47.5 L130 47.5"
+    fill="none" stroke="#1f2328" stroke-width="0.5"/>
+
+  <circle cx="100" cy="47.5" r="3" fill="#1a7f37"/>
+
+</svg>`;
+
+const curriculum = [
+  ["01. Знакомство с SVG",
+   "Структура документа, холст, размеры и система координат."],
+  ["02. Геометрические формы",
+   "Прямоугольники, окружности, линии и многоугольники."],
+  ["03. Контуры и кривые",
+   "Пути, команды Path и кривые Безье."],
+  ["04. Цвет и оформление",
+   "Заливки, обводки, прозрачность и градиенты."],
+  ["05. Текст и композиция",
+   "Текстовые элементы, выравнивание и группировка."],
+  ["06. Орнаменты и повторения",
+   "Симметрия, повторяющиеся элементы и узоры."],
+  ["07. Создание открытки",
+   "Полноценная композиция 200 × 95 мм и подготовка к печати."]
+];
+
+const lessonContainer = document.getElementById("lessons");
+
+curriculum.forEach(([title, description]) => {
+  const item = document.createElement("div");
+  item.className = "lesson";
+
+  const heading = document.createElement("strong");
+  heading.textContent = title;
+
+  const paragraph = document.createElement("p");
+  paragraph.textContent = description;
+
+  item.append(heading, paragraph);
+  lessonContainer.appendChild(item);
+});
+
+const code = document.getElementById("code");
+const preview = document.getElementById("preview");
+const previewStatus = document.getElementById("preview-status");
+
+code.value = initialSVG;
+
+function updatePreview() {
+  const source = code.value.trim();
+
+  const parser = new DOMParser();
+  const documentSVG = parser.parseFromString(
+    source,
+    "image/svg+xml"
+  );
+
+  const root = documentSVG.documentElement;
+
+  if (
+    root.nodeName.toLowerCase() !== "svg" ||
+    documentSVG.querySelector("parsererror")
+  ) {
+    preview.innerHTML = "";
+    previewStatus.textContent = "Ошибка: проверь синтаксис SVG.";
+    return;
+  }
+
+  preview.replaceChildren(
+    document.importNode(root, true)
+  );
+
+  previewStatus.textContent = "Предпросмотр обновлён.";
+  document.getElementById("editor-status").textContent =
+    "Код готов к экспериментам.";
+}
+
+document.getElementById("update").addEventListener(
+  "click",
+  updatePreview
+);
+
+document.getElementById("reset").addEventListener(
+  "click",
+  () => {
+    code.value = initialSVG;
+    updatePreview();
+  }
+);
+
+document.getElementById("download").addEventListener(
+  "click",
+  () => {
+    const blob = new Blob([code.value], {
+      type: "image/svg+xml;charset=utf-8"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "my-postcard.svg";
+    link.click();
+
+    URL.revokeObjectURL(url);
+  }
+);
+
+function showPage(pageName) {
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.toggle("hidden", page.id !== pageName);
+  });
+
+  document.querySelectorAll(".nav-button").forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.page === pageName
+    );
+  });
+}
+
+document.querySelectorAll("[data-page]").forEach(button => {
+  button.addEventListener("click", () => {
+    showPage(button.dataset.page);
+  });
+});
+
+document.querySelectorAll("[data-go]").forEach(button => {
+  button.addEventListener("click", () => {
+    showPage(button.dataset.go);
+  });
+});
+
+updatePreview();
+</script>
+
+</body>
+</html>
