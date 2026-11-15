@@ -21,6 +21,14 @@ button:hover{background:#eaeef2}button.primary{background:var(--green);border-co
 .panel-title{background:var(--panel);padding:12px 14px;border-bottom:1px solid var(--border);font-weight:600}
 .panel-body{padding:14px}
 #editor{height:470px;border:1px solid var(--border);border-radius:6px;overflow:auto}
+.search-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.search-toolbar input[type="text"]{flex:1;min-width:170px;height:34px;border:1px solid var(--border);border-radius:6px;padding:6px 9px;font:inherit;color:var(--text);background:#fff}
+.search-toolbar input:focus{outline:2px solid #80bfff;border-color:var(--blue)}
+.search-toolbar button{padding:6px 10px}
+.search-count{min-width:92px;color:var(--muted);font-size:12px}
+.search-toggle{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:12px;white-space:nowrap}
+.cm-searchMatch{background:#fff2a8}
+.cm-commentSearchMatch{background:#ffdf8b;outline:1px solid #d4a72c}
 .cm-editor{height:100%;font:13px/1.5 Consolas,monospace}
 .cm-scroller{overflow:auto}
 .canvas-wrap{height:470px;padding:18px;display:flex;align-items:center;justify-content:center;background-color:#f6f8fa;background-image:linear-gradient(45deg,#eaeef2 25%,transparent 25%),linear-gradient(-45deg,#eaeef2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eaeef2 75%),linear-gradient(-45deg,transparent 75%,#eaeef2 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;overflow:auto}
@@ -46,7 +54,16 @@ button:hover{background:#eaeef2}button.primary{background:var(--green);border-co
 <div class="workspace">
 <section class="panel">
 <div class="panel-title">Код SVG · CodeMirror 6</div>
-<div class="panel-body"><div id="editor"></div><div class="status" id="code-status">Загрузка редактора…</div></div>
+<div class="panel-body">
+  <div class="search-toolbar" role="search" aria-label="Поиск по SVG-коду">
+    <input type="text" id="search-input" placeholder="Найти в коде…" aria-label="Поисковый запрос">
+    <span class="search-count" id="search-count" aria-live="polite">0 совпадений</span>
+    <button type="button" id="search-prev" aria-label="Предыдущее совпадение" title="Предыдущее совпадение">↑</button>
+    <button type="button" id="search-next" aria-label="Следующее совпадение" title="Следующее совпадение">↓</button>
+    <label class="search-toggle"><input type="checkbox" id="comments-only"> Только комментарии</label>
+  </div>
+  <div id="editor"></div><div class="status" id="code-status">Загрузка редактора…</div>
+</div>
 </section>
 <section class="panel">
 <div class="panel-title">Визуальный холст · SVG.js</div>
@@ -60,7 +77,9 @@ button:hover{background:#eaeef2}button.primary{background:var(--green);border-co
 <script type="module">
 import {EditorView, basicSetup} from "https://esm.sh/codemirror@6.0.1";
 import {xml} from "https://esm.sh/@codemirror/lang-xml@6.0.2";
-import {EditorState} from "https://esm.sh/@codemirror/state@6.5.2";
+import {EditorState, StateEffect, StateField} from "https://esm.sh/@codemirror/state@6.5.2";
+import {Decoration} from "https://esm.sh/@codemirror/view@6.36.5";
+import {SearchQuery, setSearchQuery} from "https://esm.sh/@codemirror/search@6.5.6";
 
 const initialSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="95mm" viewBox="0 0 200 95">
   <!-- Фон открытки -->
@@ -80,6 +99,26 @@ const canvasStatus = document.getElementById("canvas-status");
 const canvas = document.getElementById("canvas");
 let applyingFromCode = false;
 let view;
+
+const setCommentMatches = StateEffect.define();
+const commentMatchField = StateField.define({
+  create: () => Decoration.none,
+  update(decorations, transaction) {
+    if (transaction.docChanged) decorations = Decoration.none;
+    for (const effect of transaction.effects) {
+      if (effect.is(setCommentMatches)) {
+        decorations = Decoration.set(
+          effect.value.map(range =>
+            Decoration.mark({class: "cm-commentSearchMatch"}).range(range.from, range.to)
+          ),
+          true
+        );
+      }
+    }
+    return decorations;
+  },
+  provide: field => EditorView.decorations.from(field)
+});
 
 function setCode(text) {
   if (!view) return;
@@ -186,10 +225,122 @@ function updateCodeAttribute(id, attribute, value) {
   setStatus(codeStatus, "Координаты " + id + " обновлены в SVG-коде.");
 }
 
+const searchInput = document.getElementById("search-input");
+const searchCount = document.getElementById("search-count");
+const commentsOnly = document.getElementById("comments-only");
+
+function collectMatches(source, query, onlyComments) {
+  if (!query) return [];
+  const segments = [];
+  if (onlyComments) {
+    const commentPattern = /<!--[\\s\\S]*?-->/g;
+    let comment;
+    while ((comment = commentPattern.exec(source)) !== null) {
+      segments.push({text: comment[0], from: comment.index});
+    }
+  } else {
+    segments.push({text: source, from: 0});
+  }
+
+  const needle = query.toLocaleLowerCase();
+  const matches = [];
+  for (const segment of segments) {
+    const haystack = segment.text.toLocaleLowerCase();
+    let offset = 0;
+    while ((offset = haystack.indexOf(needle, offset)) !== -1) {
+      matches.push({from: segment.from + offset, to: segment.from + offset + query.length});
+      offset += Math.max(1, query.length);
+    }
+  }
+  return matches;
+}
+
+let currentMatches = [];
+
+function refreshSearch() {
+  if (!view) return;
+  const query = searchInput.value;
+  const onlyComments = commentsOnly.checked;
+  const source = currentCode();
+  currentMatches = collectMatches(source, query, onlyComments);
+
+  if (onlyComments) {
+    view.dispatch({
+      effects: [
+        setSearchQuery.of(new SearchQuery({search: ""})),
+        setCommentMatches.of(currentMatches)
+      ]
+    });
+  } else {
+    view.dispatch({
+      effects: [
+        setSearchQuery.of(new SearchQuery({search: query, caseSensitive: false, literal: true})),
+        setCommentMatches.of([])
+      ]
+    });
+  }
+
+  updateSearchCount();
+}
+
+function updateSearchCount(activeIndex = -1) {
+  const total = currentMatches.length;
+  if (!total) {
+    searchCount.textContent = "0 совпадений";
+    return;
+  }
+  if (activeIndex >= 0) {
+    searchCount.textContent = (activeIndex + 1) + " из " + total;
+    return;
+  }
+  const head = view.state.selection.main.head;
+  const selected = currentMatches.findIndex(match => match.from <= head && head <= match.to);
+  searchCount.textContent = selected >= 0 ? (selected + 1) + " из " + total : total + " совпадений";
+}
+
+function goToMatch(direction) {
+  if (!currentMatches.length) return;
+  const head = view.state.selection.main.head;
+  let index;
+  if (direction > 0) {
+    index = currentMatches.findIndex(match => match.from > head);
+    if (index < 0) index = 0;
+  } else {
+    index = -1;
+    for (let i = currentMatches.length - 1; i >= 0; i--) {
+      if (currentMatches[i].from < head) { index = i; break; }
+    }
+    if (index < 0) index = currentMatches.length - 1;
+  }
+  const match = currentMatches[index];
+  view.dispatch({
+    selection: {anchor: match.from, head: match.to},
+    effects: EditorView.scrollIntoView(match.from, {y: "center"})
+  });
+  view.focus();
+  updateSearchCount(index);
+}
+
 view = new EditorView({
-  state: EditorState.create({doc:initialSVG, extensions:[basicSetup, xml()]}),
+  state: EditorState.create({
+    doc:initialSVG,
+    extensions:[
+      basicSetup,
+      xml(),
+      commentMatchField,
+      EditorView.updateListener.of(update => {
+        if (update.docChanged) refreshSearch();
+      })
+    ]
+  }),
   parent: document.getElementById("editor")
 });
+
+searchInput.addEventListener("input", refreshSearch);
+commentsOnly.addEventListener("change", refreshSearch);
+document.getElementById("search-prev").addEventListener("click", () => goToMatch(-1));
+document.getElementById("search-next").addEventListener("click", () => goToMatch(1));
+
 document.getElementById("apply").addEventListener("click", applyCodeToCanvas);
 document.getElementById("reset").addEventListener("click", () => {
   setCode(initialSVG);
