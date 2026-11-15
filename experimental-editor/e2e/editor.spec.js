@@ -1,0 +1,43 @@
+import { test, expect } from "@playwright/test";
+
+test("CodeMirror accepts typing, deletion, selection replacement and undo", async ({ page }) => {
+  await page.goto("/");
+  const editor = page.locator(".cm-content");
+  await expect(editor).toBeVisible();
+  await editor.click();
+  await page.keyboard.press("Control+End");
+  await page.keyboard.type("<!-- keyboard-check -->");
+  await expect(editor).toContainText("keyboard-check");
+  await page.keyboard.press("Control+z");
+  await expect(editor).not.toContainText("keyboard-check");
+
+  await page.evaluate(() => {
+    const view = window.__SVG_WORKSHOP_TEST__.getEditor();
+    const from = view.state.doc.toString().indexOf('fill="#1f6f50"');
+    view.dispatch({ selection: { anchor: from, head: from + 'fill="#1f6f50"'.length } });
+    view.focus();
+  });
+  await page.keyboard.type('fill="#123456"');
+  await expect(editor).toContainText('fill="#123456"');
+  await expect(page.locator("#preview svg circle[data-id='circle-a']")).toHaveAttribute("fill", "#123456");
+});
+
+test("visible search finds source text", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#search-input").fill("circle");
+  await expect(page.locator("#search-count")).toHaveText("2 совпадений");
+  await page.locator("#next").click();
+  await expect(page.locator(".cm-selectionBackground")).toBeVisible();
+});
+
+test("dragging a circle writes its coordinates back to the SVG source", async ({ page }) => {
+  await page.goto("/");
+  const circle = page.locator("#preview circle[data-id='circle-a']");
+  const before = await circle.getAttribute("cx");
+  const box = await circle.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2 + 20, { steps: 4 });
+  await page.mouse.up();
+  await expect.poll(async () => page.locator(".cm-content").innerText()).not.toContain(`cx="${before}"`);
+});
