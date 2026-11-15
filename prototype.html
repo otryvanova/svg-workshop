@@ -233,7 +233,7 @@ function collectMatches(source, query, onlyComments) {
   if (!query) return [];
   const segments = [];
   if (onlyComments) {
-    const commentPattern = /<!--[\\s\\S]*?-->/g;
+    const commentPattern = /<!--[\s\S]*?-->/g;
     let comment;
     while ((comment = commentPattern.exec(source)) !== null) {
       segments.push({text: comment[0], from: comment.index});
@@ -300,10 +300,16 @@ function updateSearchCount(activeIndex = -1) {
 
 function goToMatch(direction) {
   if (!currentMatches.length) return;
-  const head = view.state.selection.main.head;
+  const selection = view.state.selection.main;
+  const head = selection.head;
+  const selectedIndex = currentMatches.findIndex(
+    match => match.from === selection.from && match.to === selection.to
+  );
   let index;
-  if (direction > 0) {
-    index = currentMatches.findIndex(match => match.from > head);
+  if (selectedIndex >= 0) {
+    index = (selectedIndex + direction + currentMatches.length) % currentMatches.length;
+  } else if (direction > 0) {
+    index = currentMatches.findIndex(match => match.from >= head);
     if (index < 0) index = 0;
   } else {
     index = -1;
