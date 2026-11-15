@@ -41,7 +41,11 @@ test("dragging a circle writes its coordinates back to the SVG source", async ({
   await page.mouse.down();
   await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2 + 20, { steps: 4 });
   await page.mouse.up();
-  await expect.poll(async () => page.locator(".cm-content").innerText()).not.toContain(`cx="${before}"`);
+  await expect.poll(async () => {
+    const source = await page.locator(".cm-content").innerText();
+    const match = source.match(/<circle data-id="lesson-canvas-circle" cx="([^"]+)"/);
+    return Number(match?.[1]);
+  }).not.toBe(before);
 });
 
 test("adds a rectangle and edits its properties in the inspector", async ({ page }) => {
