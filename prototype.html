@@ -77,12 +77,11 @@ button:hover{background:#eaeef2}button.primary{background:var(--green);border-co
 <script type="module">
 // Pin shared CodeMirror core dependencies so every extension uses the same
 // EditorState and EditorView instances (mixed copies can break editor input).
-const cmDeps = "?deps=@codemirror/state@6.5.2,@codemirror/view@6.36.5";
-import {basicSetup} from "https://esm.sh/codemirror@6.0.1" + cmDeps;
-import {xml} from "https://esm.sh/@codemirror/lang-xml@6.2.0" + cmDeps;
+import {basicSetup} from "https://esm.sh/codemirror@6.0.1?deps=@codemirror/state@6.5.2,@codemirror/view@6.36.5";
+import {xml} from "https://esm.sh/@codemirror/lang-xml@6.2.0?deps=@codemirror/state@6.5.2,@codemirror/view@6.36.5";
 import {EditorState, StateEffect, StateField} from "https://esm.sh/@codemirror/state@6.5.2";
 import {EditorView, Decoration} from "https://esm.sh/@codemirror/view@6.36.5";
-import {SearchQuery, setSearchQuery} from "https://esm.sh/@codemirror/search@6.5.6" + cmDeps;
+import {SearchQuery, setSearchQuery} from "https://esm.sh/@codemirror/search@6.5.6?deps=@codemirror/state@6.5.2,@codemirror/view@6.36.5";
 
 const initialSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="95mm" viewBox="0 0 200 95">
   <!-- Фон открытки -->
