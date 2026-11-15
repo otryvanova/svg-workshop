@@ -111,6 +111,7 @@ function renderInspector() {
     input.value = element.getAttribute(name) ?? "";
     input.setAttribute("aria-label", name);
     input.addEventListener("change", () => updateSelectedAttribute(name, input.value));
+    input.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); updateSelectedAttribute(name, input.value); input.blur(); } });
     wrapper.append(caption, input);
     grid.append(wrapper);
   }
@@ -171,6 +172,7 @@ function bindSelectableElement(element) {
     event.preventDefault();
     event.stopPropagation();
     setSelection(id);
+    element.setPointerCapture?.(event.pointerId);
     const svg = element.ownerSVGElement;
     const matrix = svg.getScreenCTM();
     if (!matrix) return;
@@ -193,6 +195,7 @@ function bindSelectableElement(element) {
     const end = () => {
       element.removeEventListener("pointermove", move);
       element.removeEventListener("pointerup", end);
+      element.removeEventListener("pointercancel", end);
       const updated = {
         [xName]: element.getAttribute(xName),
         [yName]: element.getAttribute(yName)
@@ -206,6 +209,7 @@ function bindSelectableElement(element) {
     };
     element.addEventListener("pointermove", move);
     element.addEventListener("pointerup", end, { once: true });
+    element.addEventListener("pointercancel", end, { once: true });
   });
 }
 

@@ -5,7 +5,7 @@ function findOpeningTag(source, id) {
     'data-id="' + id + '"',
     "data-id='" + id + "'"
   ];
-  return [...source.matchAll(/<([a-z][\\w:-]*)\\b[^>]*>/gi)]
+  return [...source.matchAll(/<([a-z][\w:-]*)\b[^>]*>/gi)]
     .find((match) => markers.some((marker) => match[0].includes(marker))) || null;
 }
 
@@ -14,16 +14,16 @@ export function updateElementAttributes(source, id, attributes) {
   if (!match) return source;
   let tag = match[0];
   for (const [name, rawValue] of Object.entries(attributes)) {
-    if (!/^[a-zA-Z_:][\\w:.-]*$/.test(name)) continue;
+    if (!/^[a-zA-Z_:][\w:.-]*$/.test(name)) continue;
     const value = String(rawValue)
       .replaceAll("&", "&amp;")
       .replaceAll('"', "&quot;")
       .replaceAll("<", "&lt;");
-    const pattern = new RegExp("(\\\\s" + name + "\\\\s*=\\\\s*)(['\\\"])[^'\\\"]*\\\\2", "i");
+    const pattern = new RegExp("(\\s" + name + "\\s*=\\s*)(['\"])[^'\"]*\\2", "i");
     if (pattern.test(tag)) {
       tag = tag.replace(pattern, (_, prefix, quote) => prefix + quote + value + quote);
     } else {
-      tag = tag.replace(/\\s*\\/?>$/, (end) => " " + name + '="' + value + '"' + end);
+      tag = tag.replace(/\s*\/?>$/, (end) => " " + name + '="' + value + '"' + end);
     }
   }
   return source.slice(0, match.index) + tag + source.slice(match.index + match[0].length);
@@ -53,8 +53,8 @@ export function removeSvgElement(source, id) {
   const tagName = match[1];
   const openingTag = match[0];
   let end = match.index + openingTag.length;
-  if (!/\\/\\s*>$/.test(openingTag)) {
-    const closingTag = new RegExp("</" + tagName + "\\\\s*>", "i");
+  if (!/\/\s*>$/.test(openingTag)) {
+    const closingTag = new RegExp("</" + tagName + "\\s*>", "i");
     const closing = closingTag.exec(source.slice(end));
     if (closing) end += closing.index + closing[0].length;
   }
