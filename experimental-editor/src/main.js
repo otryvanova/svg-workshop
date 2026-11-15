@@ -13,10 +13,10 @@ import "./style.css";
 import canvasIllustration from "./assets/lesson-01-canvas.svg";
 import radiusIllustration from "./assets/lesson-01-radius.svg";
 
-const initialSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" width="600" height="360">
-  <rect width="600" height="360" fill="#ffffff"/>
-  <circle data-id="circle-a" cx="180" cy="150" r="48" fill="#1f6f50" stroke="#173f32" stroke-width="3"/>
-  <circle data-id="circle-b" cx="360" cy="210" r="34" fill="#c74735" stroke="#70291f" stroke-width="3"/>
+const initialSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="95mm" viewBox="0 0 400 190">
+  <rect width="400" height="190" fill="#ffffff"/>
+  <circle data-id="circle-a" cx="112" cy="95" r="30" fill="#1f6f50" stroke="#173f32" stroke-width="3"/>
+  <circle data-id="circle-b" cx="290" cy="95" r="25" fill="#c74735" stroke="#70291f" stroke-width="3"/>
 </svg>`;
 
 const root = document.querySelector("#app");
@@ -243,9 +243,9 @@ function addShape(tag) {
     id = "shape-" + tag + "-" + index;
   }
   const palette = {
-    rect: { x: 150, y: 95, width: 140, height: 100, fill: "#dce8e2", stroke: "#1f6f50", "stroke-width": 3 },
-    circle: { cx: 300, cy: 150, r: 45, fill: "#f4ded8", stroke: "#c74735", "stroke-width": 3 },
-    ellipse: { cx: 300, cy: 150, rx: 70, ry: 42, fill: "#e8e0f2", stroke: "#76549a", "stroke-width": 3 }
+    rect: { x: 145, y: 55, width: 110, height: 80, fill: "#dce8e2", stroke: "#1f6f50", "stroke-width": 3 },
+    circle: { cx: 200, cy: 95, r: 32, fill: "#f4ded8", stroke: "#c74735", "stroke-width": 3 },
+    ellipse: { cx: 200, cy: 95, rx: 55, ry: 35, fill: "#e8e0f2", stroke: "#76549a", "stroke-width": 3 }
   };
   const attrs = { "data-editor-id": id, ...palette[tag] };
   const next = addSvgElement(source, tag, attrs);
