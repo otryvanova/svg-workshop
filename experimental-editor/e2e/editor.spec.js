@@ -80,5 +80,5 @@ test("lesson 1 opens with SVG illustrations and loads an editable radius exercis
   await page.locator('[data-lesson-exercise="radius"]').click();
   await expect(page.locator("#lesson-view")).toBeHidden();
   await expect(page.locator(".cm-content")).toContainText('r="45"');
-  await expect(page.locator("#preview svg circle")).toHaveAttribute("r", "45");
+  await expect(page.locator("#preview svg circle").first()).toHaveAttribute("r", "45");
 });
