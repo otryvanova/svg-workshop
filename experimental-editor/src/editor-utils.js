@@ -14,9 +14,10 @@ export function updateCircleAttribute(source, id, attribute, value) {
 
 export function countMatches(source, query) {
   if (!query) return 0;
+  const haystack = source.toLocaleLowerCase();
+  const needle = query.toLocaleLowerCase();
   let count = 0;
   let index = 0;
-  const haystack = source.toLocaleLowerCase();
   while ((index = haystack.indexOf(needle, index)) !== -1) {
     count += 1;
     index += needle.length;
