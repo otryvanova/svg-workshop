@@ -10,6 +10,8 @@ import {
   updateElementAttributes
 } from "./editor-utils.js";
 import "./style.css";
+import canvasIllustration from "./assets/lesson-01-canvas.svg";
+import radiusIllustration from "./assets/lesson-01-radius.svg";
 
 const initialSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" width="600" height="360">
   <rect width="600" height="360" fill="#ffffff"/>
@@ -289,4 +291,166 @@ document.querySelector("#add-ellipse").addEventListener("click", () => addShape(
 deleteButton.addEventListener("click", deleteSelected);
 renderPreview(initialSVG);
 updateSearchCountOnly();
-window.__SVG_WORKSHOP_TEST__ = { getEditor: () => view, renderPreview, setSelection };
+
+const lessonSamples = {
+  canvas: \`<svg xmlns="http://www.w3.org/2000/svg"
+     width="200mm" height="95mm" viewBox="0 0 400 190">
+  <rect x="1" y="1" width="398" height="188"
+        fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+  <path d="M0 95 H400 M200 0 V190"
+        fill="none" stroke="#cbd5e1" stroke-width="1"
+        stroke-dasharray="5 5"/>
+  <circle cx="200" cy="95" r="35"
+          fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <circle cx="200" cy="95" r="3" fill="#2563eb"/>
+</svg>\`,
+  radius: \`<svg xmlns="http://www.w3.org/2000/svg"
+     width="200mm" height="95mm" viewBox="0 0 400 190">
+  <rect width="400" height="190" fill="#ffffff"/>
+  <circle cx="150" cy="95" r="45"
+          fill="#dbeafe" fill-opacity="0.65"
+          stroke="#2563eb" stroke-width="2"/>
+  <circle cx="150" cy="95" r="3" fill="#2563eb"/>
+  <path d="M150 95 H195" fill="none"
+        stroke="#dc6b35" stroke-width="2"/>
+</svg>\`
+};
+
+const lessonButton = document.createElement("button");
+lessonButton.id = "lesson-toggle";
+lessonButton.className = "lesson-tab";
+lessonButton.type = "button";
+lessonButton.textContent = "Занятие 01";
+root.querySelector(".topbar").insertBefore(lessonButton, status);
+
+const lessonView = document.createElement("main");
+lessonView.id = "lesson-view";
+lessonView.className = "lesson-view";
+lessonView.hidden = true;
+lessonView.innerHTML = \`
+  <header class="lesson-heading">
+    <div class="lesson-eyebrow">SVG-МАСТЕРСКАЯ · УЧЕБНАЯ ПРОГРАММА</div>
+    <div class="lesson-heading-row">
+      <div>
+        <div class="lesson-number">ЗАНЯТИЕ 01</div>
+        <h2>Знакомство с SVG</h2>
+        <p>Документ, холст, размеры и система координат</p>
+      </div>
+      <div class="lesson-duration">Основы · практика в редакторе</div>
+    </div>
+  </header>
+
+  <section class="lesson-intro">
+    <h3>Что изучим</h3>
+    <p>Разберём, как устроен SVG-документ, чем физический размер отличается от координатной системы, где находится начало координат и как задаются параметры окружности. Все примеры можно открыть в редакторе и изменить самостоятельно.</p>
+  </section>
+
+  <section class="lesson-section">
+    <div class="lesson-section-title"><span>01</span><div><h3>Что такое SVG</h3><p>Векторное изображение как текстовое описание</p></div></div>
+    <div class="lesson-copy">
+      <p>SVG — формат векторной графики. Внутри файла записаны элементы изображения и их свойства: геометрические формы, координаты, размеры, заливки и обводки. Браузер или графический редактор читает описание и отображает изображение.</p>
+      <p>Документ начинается с корневого элемента <code>&lt;svg&gt;</code>. Внутри него размещаются другие элементы: например, <code>&lt;rect&gt;</code> — прямоугольник, <code>&lt;circle&gt;</code> — окружность, <code>&lt;path&gt;</code> — произвольный контур.</p>
+      <pre class="lesson-code"><code>&lt;svg xmlns="http://www.w3.org/2000/svg"
+     width="200mm" height="95mm"
+     viewBox="0 0 400 190"&gt;
+  &lt;circle cx="200" cy="95" r="35" /&gt;
+&lt;/svg&gt;</code></pre>
+      <p>В этом примере корневой элемент задаёт размер документа и координатную область, а элемент <code>circle</code> описывает окружность.</p>
+    </div>
+  </section>
+
+  <section class="lesson-section">
+    <div class="lesson-section-title"><span>02</span><div><h3>Что такое холст</h3><p>Физический размер и координатная система</p></div></div>
+    <div class="lesson-example">
+      <a class="lesson-illustration" href="\${canvasIllustration}" target="_blank" rel="noopener">
+        <img src="\${canvasIllustration}" alt="Схема холста SVG с началом координат, осями X и Y и центральной точкой">
+      </a>
+      <div class="lesson-copy">
+        <p>Холст — область, в которой размещается изображение. В нашем курсе базовый формат документа — открытка <strong>200 × 95 мм</strong>.</p>
+        <p>Атрибуты <code>width</code> и <code>height</code> задают физический размер. Атрибут <code>viewBox</code> описывает внутреннюю координатную область, с которой работает SVG.</p>
+        <p>В примере <code>viewBox="0 0 400 190"</code>: начало координат находится в левом верхнем углу; X увеличивается вправо, Y — вниз. Центр этой области — точка (200, 95).</p>
+        <p class="lesson-note">При соотношении 400 × 190 единиц и физическом размере 200 × 95 мм одна внутренняя единица соответствует 0,5 мм.</p>
+        <a class="lesson-source-link" href="\${canvasIllustration}" target="_blank" rel="noopener">Открыть исходный SVG</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="lesson-section">
+    <div class="lesson-section-title"><span>03</span><div><h3>Разберём окружность и радиус</h3><p>Три параметра, которые задают круг</p></div></div>
+    <div class="lesson-example">
+      <a class="lesson-illustration" href="\${radiusIllustration}" target="_blank" rel="noopener">
+        <img src="\${radiusIllustration}" alt="Окружность с отмеченным центром и радиусом">
+      </a>
+      <div class="lesson-copy">
+        <p>Элемент <code>&lt;circle&gt;</code> описывает окружность с помощью трёх основных параметров:</p>
+        <ul>
+          <li><code>cx</code> — координата центра по горизонтали;</li>
+          <li><code>cy</code> — координата центра по вертикали;</li>
+          <li><code>r</code> — радиус, расстояние от центра до линии окружности.</li>
+        </ul>
+        <p>Например, <code>&lt;circle cx="150" cy="95" r="45" /&gt;</code> задаёт окружность с центром (150, 95) и радиусом 45 единиц.</p>
+        <a class="lesson-source-link" href="\${radiusIllustration}" target="_blank" rel="noopener">Открыть исходный SVG</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="lesson-section lesson-practice">
+    <div class="lesson-section-title"><span>04</span><div><h3>Практика в редакторе</h3><p>Изменяем код и наблюдаем результат</p></div></div>
+    <p class="lesson-practice-intro">Нажми «Открыть задание в редакторе». В коде найди указанный атрибут, измени его значение и посмотри, как изменилось изображение. Можно возвращаться к исходному значению и пробовать снова.</p>
+    <div class="lesson-task-grid">
+      <article class="lesson-task">
+        <span class="lesson-task-number">ЗАДАНИЕ 1</span>
+        <h4>Размер холста</h4>
+        <p>Найди <code>width</code>, <code>height</code> и <code>viewBox</code>. Сравни физический размер документа и внутреннюю координатную область. Измени координату центра окружности <code>cx</code> с 200 на 240.</p>
+        <button type="button" data-lesson-exercise="canvas">Открыть задание в редакторе</button>
+      </article>
+      <article class="lesson-task">
+        <span class="lesson-task-number">ЗАДАНИЕ 2</span>
+        <h4>Радиус окружности</h4>
+        <p>Найди в строке <code>&lt;circle&gt;</code> параметр <code>r="45"</code>. Измени его на <code>r="65"</code>, затем попробуй значения 25 и 80. Наблюдай, как меняется размер круга.</p>
+        <button type="button" data-lesson-exercise="radius">Открыть задание в редакторе</button>
+      </article>
+    </div>
+    <details class="lesson-check">
+      <summary>Самопроверка: что важно запомнить?</summary>
+      <ol>
+        <li>Какой элемент является корневым в SVG-документе? — <code>&lt;svg&gt;</code>.</li>
+        <li>Какие атрибуты задают физический размер открытки? — <code>width</code> и <code>height</code>.</li>
+        <li>Для чего нужен <code>viewBox</code>? — Он задаёт внутреннюю координатную область SVG.</li>
+        <li>Где находится начало координат? — В левом верхнем углу.</li>
+        <li>Как задаётся радиус окружности? — Атрибутом <code>r</code>.</li>
+      </ol>
+    </details>
+  </section>
+  <footer class="lesson-footer">
+    <span>Занятие 01 · Знакомство с SVG</span>
+    <button type="button" id="lesson-back">Вернуться в лабораторию</button>
+  </footer>
+\`;
+root.append(lessonView);
+
+function showLesson(visible) {
+  lessonView.hidden = !visible;
+  root.querySelector(".workspace").hidden = visible;
+  lessonButton.textContent = visible ? "Вернуться в лабораторию" : "Занятие 01";
+  if (visible) lessonView.scrollIntoView({ behavior: "instant", block: "start" });
+  else root.querySelector(".workspace").scrollIntoView({ behavior: "instant", block: "start" });
+}
+
+lessonButton.addEventListener("click", () => showLesson(lessonView.hidden));
+lessonView.querySelector("#lesson-back").addEventListener("click", () => showLesson(false));
+lessonView.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-lesson-exercise]");
+  if (!button) return;
+  const source = lessonSamples[button.dataset.lessonExercise];
+  if (!source) return;
+  selectedId = null;
+  view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: source } });
+  renderPreview(source);
+  updateSearchCountOnly();
+  searchInput.value = "";
+  showLesson(false);
+  view.focus();
+});
+
+window.__SVG_WORKSHOP_TEST__ = { getEditor: () => view, renderPreview, setSelection, showLesson };
