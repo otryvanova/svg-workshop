@@ -400,7 +400,7 @@ lessonView.innerHTML = `
     <div class="lesson-task-grid">
       <article class="lesson-task">
         <span class="lesson-task-number">ЗАДАНИЕ 1</span>
-        <h4>Размер холста</h4>
+        <h4>Холст и координаты</h4>
         <p>Найди <code>width</code>, <code>height</code> и <code>viewBox</code>. Сравни физический размер документа и внутреннюю координатную область. Измени координату центра окружности <code>cx</code> с 200 на 240.</p>
         <button type="button" data-lesson-exercise="canvas">Открыть задание в редакторе</button>
       </article>
