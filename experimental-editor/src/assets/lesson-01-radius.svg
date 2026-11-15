@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="200mm" height="95mm" viewBox="0 0 400 190"
+     role="img" aria-labelledby="title desc">
+  <title id="title">Разберём радиус</title>
+  <desc id="desc">Окружность с отмеченным центром и радиусом.</desc>
+  <rect width="400" height="190" fill="#ffffff"/>
+  <g transform="translate(0 1.25) scale(1.25)">
+    <circle cx="150" cy="72" r="45"
+            fill="#dbeafe" fill-opacity="0.65"
+            stroke="#2563eb" stroke-width="2"/>
+    <circle cx="150" cy="72" r="3" fill="#2563eb"/>
+    <path d="M150 72 H195" fill="none"
+          stroke="#dc6b35" stroke-width="2"/>
+    <path d="M195 72 l-7 -4 v8 z" fill="#dc6b35"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="12"
+     font-weight="400" fill="#0d0d0d">
+    <text x="197.5" y="80">Центр</text>
+    <text x="200" y="116.25" fill="#dc6b35">r = 45</text>
+  </g>
+</svg>
