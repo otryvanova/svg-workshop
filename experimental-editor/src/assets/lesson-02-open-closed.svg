@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="95mm" viewBox="0 0 400 190">
+  <rect width="400" height="190" fill="#ffffff"/>
+  <rect x="12" y="12" width="180" height="166" rx="7" fill="#f8fafc" stroke="#dbe2ea"/>
+  <rect x="208" y="12" width="180" height="166" rx="7" fill="#f8fafc" stroke="#dbe2ea"/>
+  <polyline points="42,115 78,55 122,105 162,47" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <polygon points="238,115 274,55 318,105 358,47" fill="#dbeafe" stroke="#2563eb" stroke-width="4" stroke-linejoin="round"/>
+  <g fill="#dc6b35">
+    <circle cx="42" cy="115" r="4"/><circle cx="78" cy="55" r="4"/><circle cx="122" cy="105" r="4"/><circle cx="162" cy="47" r="4"/>
+    <circle cx="238" cy="115" r="4"/><circle cx="274" cy="55" r="4"/><circle cx="318" cy="105" r="4"/><circle cx="358" cy="47" r="4"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#334155" text-anchor="middle">
+    <text x="102" y="151">polyline</text><text x="298" y="151">polygon</text>
+    <text x="102" y="166" font-size="9" fill="#64748b">open line</text><text x="298" y="166" font-size="9" fill="#64748b">closed contour</text>
+  </g>
+</svg>

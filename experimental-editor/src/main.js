@@ -14,6 +14,7 @@ import {
 import "./style.css";
 import canvasIllustration from "./assets/lesson-01-canvas.svg";
 import radiusIllustration from "./assets/lesson-01-radius.svg";
+import { createLessonTwoView } from "./lesson-02.js";
 
 const initialSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="95mm" viewBox="0 0 400 190">
   <rect width="400" height="190" fill="#ffffff"/>
@@ -650,8 +651,48 @@ const lessonSamples = {
   <circle cx="150" cy="95" r="3" fill="#2563eb"/>
   <path d="M150 95 H195" fill="none"
         stroke="#dc6b35" stroke-width="2"/>
-</svg>`
+</svg>`,
+  rect: \`<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="95mm" viewBox="0 0 400 190">
+  <rect width="400" height="190" fill="#ffffff"/>
+  <rect data-id="lesson2-rect" x="70" y="45" width="150" height="100" rx="14"
+        fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+</svg>\`,
+  round: \`<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="95mm" viewBox="0 0 400 190">
+  <rect width="400" height="190" fill="#ffffff"/>
+  <circle data-id="lesson2-circle" cx="105" cy="95" r="48"
+          fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+  <ellipse data-id="lesson2-ellipse" cx="290" cy="95" rx="72" ry="42"
+           fill="#f4e7d2" stroke="#bd7934" stroke-width="3"/>
+  <circle cx="105" cy="95" r="3" fill="#2563eb"/>
+  <circle cx="290" cy="95" r="3" fill="#bd7934"/>
+</svg>\`,
+  lines: \`<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="95mm" viewBox="0 0 400 190">
+  <rect width="400" height="190" fill="#ffffff"/>
+  <line data-id="lesson2-line" x1="55" y1="145" x2="345" y2="45"
+        stroke="#dc6b35" stroke-width="5" stroke-linecap="round"/>
+  <polyline data-id="lesson2-polyline" points="55,45 145,135 245,45 345,135"
+            fill="none" stroke="#2563eb" stroke-width="5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+</svg>\`,
+  polygon: \`<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="95mm" viewBox="0 0 400 190">
+  <rect width="400" height="190" fill="#ffffff"/>
+  <polygon data-id="lesson2-polygon" points="200,25 278,80 248,160 152,160 122,80"
+           fill="#dbeafe" stroke="#2563eb" stroke-width="3"
+           stroke-linejoin="round"/>
+  <circle cx="200" cy="25" r="3" fill="#dc6b35"/>
+  <circle cx="278" cy="80" r="3" fill="#dc6b35"/>
+  <circle cx="248" cy="160" r="3" fill="#dc6b35"/>
+  <circle cx="152" cy="160" r="3" fill="#dc6b35"/>
+  <circle cx="122" cy="80" r="3" fill="#dc6b35"/>
+</svg>\`
 };
+
+const lesson2Button = document.createElement("button");
+lesson2Button.id = "lesson2-toggle";
+lesson2Button.className = "lesson-tab";
+lesson2Button.type = "button";
+lesson2Button.textContent = "Занятие 02";
+root.querySelector(".topbar").insertBefore(lesson2Button, status);
 
 const lessonButton = document.createElement("button");
 lessonButton.id = "lesson-toggle";
@@ -766,28 +807,50 @@ lessonView.innerHTML = `
 `;
 root.append(lessonView);
 
-function showLesson(visible) {
-  lessonView.hidden = !visible;
-  root.querySelector(".workspace").hidden = visible;
-  lessonButton.textContent = visible ? "Вернуться в лабораторию" : "Занятие 01";
-  if (visible) lessonView.scrollIntoView({ behavior: "instant", block: "start" });
-  else root.querySelector(".workspace").scrollIntoView({ behavior: "instant", block: "start" });
+const lesson2View = createLessonTwoView();
+root.append(lesson2View);
+
+function showLessonPage(active) {
+  lessonView.hidden = active !== "lesson1";
+  lesson2View.hidden = active !== "lesson2";
+  const inLesson = Boolean(active);
+  root.querySelector(".workspace").hidden = inLesson;
+  lessonButton.textContent = active === "lesson1" ? "Вернуться в лабораторию" : "Занятие 01";
+  lesson2Button.textContent = active === "lesson2" ? "Вернуться в лабораторию" : "Занятие 02";
+  const page = active === "lesson1" ? lessonView : active === "lesson2" ? lesson2View : root.querySelector(".workspace");
+  page.scrollIntoView({ behavior: "instant", block: "start" });
 }
 
-lessonButton.addEventListener("click", () => showLesson(lessonView.hidden));
+function showLesson(visible) {
+  showLessonPage(visible ? "lesson1" : null);
+}
+
+function showLesson2(visible) {
+  showLessonPage(visible ? "lesson2" : null);
+}
+
+lessonButton.addEventListener("click", () => showLessonPage(lessonView.hidden ? "lesson1" : null));
+lesson2Button.addEventListener("click", () => showLessonPage(lesson2View.hidden ? "lesson2" : null));
 lessonView.querySelector("#lesson-back").addEventListener("click", () => showLesson(false));
-lessonView.addEventListener("click", (event) => {
+lesson2View.querySelector("#lesson2-back").addEventListener("click", () => showLesson2(false));
+
+function handleLessonExercise(event) {
   const button = event.target.closest("[data-lesson-exercise]");
   if (!button) return;
   const source = lessonSamples[button.dataset.lessonExercise];
   if (!source) return;
   selectedId = null;
+  activeGradientStopIndex = null;
   view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: source } });
   renderPreview(source);
+  setSelection(null);
   updateSearchCountOnly();
   searchInput.value = "";
-  showLesson(false);
+  showLessonPage(null);
   view.focus();
-});
+}
 
-window.__SVG_WORKSHOP_TEST__ = { getEditor: () => view, renderPreview, setSelection, showLesson };
+lessonView.addEventListener("click", handleLessonExercise);
+lesson2View.addEventListener("click", handleLessonExercise);
+
+window.__SVG_WORKSHOP_TEST__ = { getEditor: () => view, renderPreview, setSelection, showLesson, showLesson2 };

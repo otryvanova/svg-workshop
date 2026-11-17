@@ -203,3 +203,66 @@ test("creates and edits a multi-stop gradient with the shared palette", async ({
   await page.locator('#inspector [data-stop-opacity="0"]').press("Tab");
   await expect(page.locator("#preview radialGradient stop").first()).toHaveAttribute("stop-opacity", "0.45");
 });
+
+
+test("lesson 2 opens as a separate course page with SVG diagrams", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#lesson2-toggle").click();
+  await expect(page.locator("#lesson2-view")).toBeVisible();
+  await expect(page.locator("#lesson2-view")).toContainText("Геометрические формы");
+  await expect(page.locator("#lesson2-view")).toContainText("Прямоугольник — rect");
+  await expect(page.locator("#lesson2-view")).toContainText("Многоугольник — polygon");
+  const illustrations = page.locator("#lesson2-view .lesson-illustration img");
+  await expect(illustrations).toHaveCount(3);
+  await expect.poll(async () => illustrations.evaluateAll((imgs) => imgs.every((img) => img.complete && img.naturalWidth > 0))).toBe(true);
+  await page.locator("#lesson2-view #lesson2-back").click();
+  await expect(page.locator("#lesson2-view")).toBeHidden();
+  await page.locator("#lesson-toggle").click();
+  await expect(page.locator("#lesson-view")).toBeVisible();
+  await expect(page.locator("#lesson-view")).toContainText("Знакомство с SVG");
+});
+
+test("lesson 2 rectangle exercise opens editable code and updates preview", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#lesson2-toggle").click();
+  await page.locator('[data-lesson-exercise="rect"]').click();
+  await expect(page.locator("#lesson2-view")).toBeHidden();
+  const rect = page.locator('#preview rect[data-id="lesson2-rect"]');
+  await expect(rect).toBeVisible();
+  await expect(rect).toHaveAttribute("width", "150");
+  await page.evaluate(() => {
+    const editor = window.__SVG_WORKSHOP_TEST__.getEditor();
+    const source = editor.state.doc.toString();
+    const updated = source.replace('width="150"', 'width="210"');
+    editor.dispatch({ changes: { from: 0, to: source.length, insert: updated } });
+  });
+  await expect(rect).toHaveAttribute("width", "210");
+});
+
+test("lesson 2 round exercise contains circle and ellipse with separate radii", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#lesson2-toggle").click();
+  await page.locator('[data-lesson-exercise="round"]').click();
+  await expect(page.locator('#preview circle[data-id="lesson2-circle"]')).toHaveAttribute("r", "48");
+  await expect(page.locator('#preview ellipse[data-id="lesson2-ellipse"]')).toHaveAttribute("rx", "72");
+  await expect(page.locator('#preview ellipse[data-id="lesson2-ellipse"]')).toHaveAttribute("ry", "42");
+});
+
+test("lesson 2 line exercise shows a line and an open polyline", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#lesson2-toggle").click();
+  await page.locator('[data-lesson-exercise="lines"]').click();
+  await expect(page.locator('#preview line[data-id="lesson2-line"]')).toBeVisible();
+  await expect(page.locator('#preview polyline[data-id="lesson2-polyline"]')).toHaveAttribute("fill", "none");
+  await expect(page.locator(".cm-content")).toContainText('points="55,45 145,135 245,45 345,135"');
+});
+
+test("lesson 2 polygon sample exposes editable coordinate pairs", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#lesson2-toggle").click();
+  await page.locator('[data-lesson-exercise="polygon"]').click();
+  const polygon = page.locator('#preview polygon[data-id="lesson2-polygon"]');
+  await expect(polygon).toBeVisible();
+  await expect(polygon).toHaveAttribute("points", "200,25 278,80 248,160 152,160 122,80");
+  await expect(page.locator(".cm-content")).toContainText("<polygon");
+});
